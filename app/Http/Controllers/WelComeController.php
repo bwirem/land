@@ -80,7 +80,7 @@ class WelComeController extends Controller
     {
         return Inertia::render('Dashboard', [
             'stats' => [
-                'landowners' => \App\Models\Landowner::count(),
+                'landowners' => \App\Models\LandOwner::count(),
                 'sites' => \App\Models\Site::count(),
                 'investors' => \App\Models\Investor::count(),
                 'site_interests' => 0, // \App\Models\SiteInterest::count(),
