@@ -89,6 +89,8 @@ export default function SiteDetail({ site, area }) {
                     description: formData.description,
                 }),
             });
+
+            
     
             // Check if the response is ok
             if (!response.ok) {
