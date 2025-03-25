@@ -19,16 +19,32 @@ export default function SiteDetail({ site, area }) {
     useEffect(() => {
         if (area) {
             setMapData({
+                // center: area.coordinates.length ? area.coordinates[0] : [-6.7857, 35.7390], 
+                // zoom: 10,
+                // tileLayerURL: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                // attributionText: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                // markerHTML: `<div style="width: 10px; height: 10px; background-color: black; border-radius: 50%; border: 2px solid white;"></div>`,
+                // polygonSettings: {
+                //     color: area.color || "blue",
+                //     fillColor: area.color || "blue",
+                //     fillOpacity: 0.3,
+                // }
+
                 center: area.coordinates.length ? area.coordinates[0] : [-6.7857, 35.7390], 
                 zoom: 10,
-                tileLayerURL: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                attributionText: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+
+                // Use CARTO Basemap
+                tileLayerURL: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                attributionText: '© <a href="https://carto.com/">CARTO</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors',
+
                 markerHTML: `<div style="width: 10px; height: 10px; background-color: black; border-radius: 50%; border: 2px solid white;"></div>`,
+
                 polygonSettings: {
                     color: area.color || "blue",
                     fillColor: area.color || "blue",
                     fillOpacity: 0.3,
                 }
+
             });
         }
     }, [area]);

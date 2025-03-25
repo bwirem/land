@@ -26,21 +26,44 @@ export default function WelcomeSupport({ auth, initialSectors, initialSites, ini
         }
     }, [sector]);
 
+    // const mapCenter = [-6.7857, 35.7390]; // Default map center
+    // const mapZoom = 6;
+    // const tileLayerURL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    // const attributionText = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    // const markerHTML = `<div style="
+    //                     width: 10px; height: 10px; 
+    //                     background-color: black; 
+    //                     border-radius: 50%;
+    //                     border: 2px solid white;">
+    //                 </div>`;
+    // const polygonSettings = {
+    //     color: "blue",
+    //     fillColor: "blue",
+    //     fillOpacity: 0.3,
+    // };
+
     const mapCenter = [-6.7857, 35.7390]; // Default map center
     const mapZoom = 6;
-    const tileLayerURL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-    const attributionText = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+    // Use CARTO Basemap
+    const tileLayerURL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    const attributionText = '© <a href="https://carto.com/">CARTO</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors';
+
+    // Marker style
     const markerHTML = `<div style="
                         width: 10px; height: 10px; 
                         background-color: black; 
                         border-radius: 50%;
                         border: 2px solid white;">
                     </div>`;
+
+    // Polygon style
     const polygonSettings = {
         color: "blue",
         fillColor: "blue",
         fillOpacity: 0.3,
     };
+
 
     return (
         <>
