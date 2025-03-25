@@ -3,7 +3,7 @@ import { Head } from "@inertiajs/react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faIndustry, faLocationDot, faLocation, faGavel, faMountain, faSpa, 
 faRulerCombined, faLandmark, faLightbulb, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
-import MapView from "../components/MapView";
+import MapView from '../Components/MapView';
 
 export default function SiteDetail({ site, area }) {
     const [mapData, setMapData] = useState(null);
