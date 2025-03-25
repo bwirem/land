@@ -182,11 +182,11 @@ export default function AuthenticatedLayout({ header, children }) {
                     <Link href="/">
                         <div className="flex items-center">
                             <img
-                                src="/img/logobw.png"
+                                src="/img/logo.png"
                                 alt="Application Logo"
                                 className="w-8 h-8 mr-2"
                             />
-                            <h1 className="text-xl font-bold">HeriPesa</h1>
+                            <h1 className="text-xl font-bold">Land</h1>
                         </div>
                     </Link>
                 </div>

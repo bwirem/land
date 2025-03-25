@@ -83,7 +83,7 @@ class LandOwnerController extends Controller
         // Create the landowner
         LandOwner::create($validated);
 
-        return redirect()->route('systemconfiguration0.landowners.index')
+        return redirect()->route('landowner0.index')
             ->with('success', 'Landowner created successfully.');
     }
 
@@ -188,7 +188,7 @@ class LandOwnerController extends Controller
         // Update the landowner
         $landowner->update($validated);
 
-        return redirect()->route('systemconfiguration0.landowners.index')
+        return redirect()->route('landowner0.index')
             ->with('success', 'Landowner updated successfully.');
     }
 

@@ -34,7 +34,7 @@ export default function Create() {
         e.preventDefault();
 
         setIsSaving(true);
-        post(route('systemconfiguration5.facilityoptions.store'), {
+        post(route('systemconfiguration2.facilityoptions.store'), {
             onSuccess: () => {
                 setIsSaving(false);
                 resetForm();
@@ -84,7 +84,7 @@ export default function Create() {
 
                             <div className="flex justify-end space-x-4 mt-6">                                
                                 <Link
-                                    href={route('systemconfiguration5.facilityoptions.index')}  // Using the route for navigation
+                                    href={route('systemconfiguration2.facilityoptions.index')}  // Using the route for navigation
                                     method="get"  // Optional, if you want to define the HTTP method (GET is default)
                                     preserveState={true}  // Keep the page state (similar to `preserveState: true` in the button)
                                     className="bg-gray-300 text-gray-700 rounded p-2 flex items-center space-x-2"

@@ -9,7 +9,7 @@ import Modal from '@/Components/CustomModal';
 
 export default function Edit({ landowner }) {
     const { data, setData, put, errors, processing, reset } = useForm({
-        landowner_type: landowner.landowner_type,
+        owner_type: landowner.owner_type,
         first_name: landowner.first_name || '',
         other_names: landowner.other_names || '',
         surname: landowner.surname || '',
@@ -73,21 +73,21 @@ export default function Edit({ landowner }) {
 
                             {/* Landowner Type */}
                             <div>
-                                <label htmlFor="landowner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
+                                <label htmlFor="owner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
                                 <select
-                                    id="landowner_type"
-                                    value={data.landowner_type}
-                                    onChange={(e) => setData('landowner_type', e.target.value)}
+                                    id="owner_type"
+                                    value={data.owner_type}
+                                    onChange={(e) => setData('owner_type', e.target.value)}
                                     className="w-full border p-2 rounded text-sm"
                                 >
                                     <option value="individual">Individual</option>
                                     <option value="company">Company</option>
                                 </select>
-                                {errors.landowner_type && <p className="text-sm text-red-600">{errors.landowner_type}</p>}
+                                {errors.owner_type && <p className="text-sm text-red-600">{errors.owner_type}</p>}
                             </div>
 
                             {/* Individual Landowner Fields */}
-                            {data.landowner_type === 'individual' && (
+                            {data.owner_type === 'individual' && (
                                 <div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
@@ -128,7 +128,7 @@ export default function Edit({ landowner }) {
                             )}
 
                             {/* Company Landowner Fields */}
-                            {data.landowner_type === 'company' && (
+                            {data.owner_type === 'company' && (
                                 <div>
                                     <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">Company Name</label>
                                     <input

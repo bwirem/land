@@ -83,7 +83,7 @@ class InvestorController extends Controller
         // Create the investor
         Investor::create($validated);
 
-        return redirect()->route('systemconfiguration0.investors.index')
+        return redirect()->route('investor0.index')
             ->with('success', 'Investor created successfully.');
     }
 
@@ -188,7 +188,7 @@ class InvestorController extends Controller
         // Update the investor
         $investor->update($validated);
 
-        return redirect()->route('systemconfiguration0.investors.index')
+        return redirect()->route('investor0.index')
             ->with('success', 'Investor updated successfully.');
     }
 

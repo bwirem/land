@@ -1,13 +1,19 @@
 <?php
 
+use App\Http\Controllers\WelComeController;
 use App\Http\Controllers\ProfileController;
 
-use App\Http\Controllers\LoanApplicationController;
-use App\Http\Controllers\LoanApprovalController;
+use App\Http\Controllers\SiteApplicationController;
+use App\Http\Controllers\SiteApprovalController;
 
-use App\Http\Controllers\BLSFeesTypeController;
-use App\Http\Controllers\BLSPackageController;
-use App\Http\Controllers\SectorController;
+use App\Http\Controllers\SiteActivityController;
+use App\Http\Controllers\SiteUtilityController;
+use App\Http\Controllers\SiteSectorController;
+use App\Http\Controllers\SiteAllocationMethodController;
+use App\Http\Controllers\SiteJurisdictionController;
+use App\Http\Controllers\SiteOpportunityTypeController;
+
+
 use App\Http\Controllers\LandOwnerController;
 use App\Http\Controllers\InvestorController;
 
@@ -31,39 +37,22 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-use App\Models\Sector;
+use App\Models\Site;
+use App\Models\SiteSector;
+use App\Models\SiteCoordinate;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'initialSectors' => Sector::select('id', 'name as description')->get(),
-        'initialSites' => [
-            ['id' => 101, 'project_description' => 'Farm Irrigation Project', 'street_name' => 'Green Valley Road'],
-            ['id' => 102, 'project_description' => 'Software Hub', 'street_name' => 'Tech Avenue'],
-            ['id' => 103, 'project_description' => 'Community Health Center', 'street_name' => 'Medical Street'],
-        ],
-        'initialAreas' => [
-            [
-                'id' => 201,
-                'name' => 'Central District',
-                'color' => '#FF5733',
-                'coordinates' => [[-6.78, 35.74], [-6.79, 35.75], [-6.77, 35.76], [-6.78, 35.74]],
-            ],
-            [
-                'id' => 202,
-                'name' => 'Western Zone',
-                'color' => '#33FF57',
-                'coordinates' => [[-6.88, 35.70], [-6.89, 35.71], [-6.87, 35.72], [-6.88, 35.70]],
-            ],
-        ],
-    ]);
-});
+// Home Page
+Route::get('/', [WelComeController::class, 'welcome'])->name('welcome');
 
+// Site Detail Page
+Route::get('/homesite/{id}', [WelComeController::class, 'showSiteDetail'])->name('site.detail');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Site Detail Page
+Route::put('/interest/{id}', [WelComeController::class, 'siteInterest'])->name('interest');
+
+// Dashboard
+Route::get('/dashboard', [WelComeController::class, 'dashboard'])
+->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     // Profile routes
@@ -84,61 +73,61 @@ Route::middleware('auth')->group(function () {
 
     // Order routes
     Route::prefix('landowner1')->name('landowner1.')->group(function () {
-        Route::get('/', [LoanApplicationController::class, 'index'])->name('index');
-        Route::get('/create', [LoanApplicationController::class, 'create'])->name('create');
-        Route::post('/', [LoanApplicationController::class, 'store'])->name('store');
-        Route::get('/{loan}/edit', [LoanApplicationController::class, 'edit'])->name('edit');
-        Route::put('/{loan}', [LoanApplicationController::class, 'update'])->name('update');
-        Route::put('documentation/{loan}', [LoanApplicationController::class, 'documentation'])->name('documentation');
-        Route::post('submit/{loan}', [LoanApplicationController::class, 'submit'])->name('submit');
-        Route::get('customerLoans/{customerId}', [LoanApplicationController::class, 'customerLoans'])->name('customerLoans'); 
+        Route::get('/', [SiteApplicationController::class, 'index'])->name('index');
+        Route::get('/create', [SiteApplicationController::class, 'create'])->name('create');
+        Route::post('/', [SiteApplicationController::class, 'store'])->name('store');
+        Route::get('/{site}/edit', [SiteApplicationController::class, 'edit'])->name('edit');
+        Route::put('/{site}', [SiteApplicationController::class, 'update'])->name('update');
+        
+        Route::put('coordinating/{site}', [SiteApplicationController::class, 'coordinating'])->name('coordinating');
+        Route::put('documentation/{site}', [SiteApplicationController::class, 'documentation'])->name('documentation');
+        Route::post('submit/{site}', [SiteApplicationController::class, 'submit'])->name('submit');
+        Route::get('customerSites/{customerId}', [SiteApplicationController::class, 'customerSites'])->name('customerSites'); 
        
     });
 
-     // Land  routes
-     Route::prefix('management0')->name('management0.')->group(function () {
-        Route::get('/', [LoanApprovalController::class, 'index'])->name('index');        
-        Route::get('/{loan}/edit', [LoanApprovalController::class, 'edit'])->name('edit');
-        Route::put('/{loan}', [LoanApprovalController::class, 'update'])->name('update'); 
-        Route::post('approve/{loan}', [LoanApprovalController::class, 'approve'])->name('approve'); 
-    });
+    //  // Land  routes
+    //  Route::prefix('management0')->name('management0.')->group(function () {
+    //     Route::get('/', [SiteApprovalController::class, 'index'])->name('index');        
+    //     Route::get('/{site}/edit', [SiteApprovalController::class, 'edit'])->name('edit');
+    //     Route::put('/{site}', [SiteApprovalController::class, 'update'])->name('update'); 
+    //     Route::post('approve/{site}', [SiteApprovalController::class, 'approve'])->name('approve'); 
+    // });
 
 
-    // Post Bills routes
-    Route::prefix('management1')->name('management1.')->group(function () {
-        Route::get('/', [LoanApprovalController::class, 'index'])->name('index');        
-        Route::get('/{loan}/edit', [LoanApprovalController::class, 'edit'])->name('edit');
-        Route::put('/{loan}', [LoanApprovalController::class, 'update'])->name('update'); 
-        Route::post('approve/{loan}', [LoanApprovalController::class, 'approve'])->name('approve'); 
-    });
+    // // Post Bills routes
+    // Route::prefix('management1')->name('management1.')->group(function () {
+    //     Route::get('/', [SiteApprovalController::class, 'index'])->name('index');        
+    //     Route::get('/{site}/edit', [SiteApprovalController::class, 'edit'])->name('edit');
+    //     Route::put('/{site}', [SiteApprovalController::class, 'update'])->name('update'); 
+    //     Route::post('approve/{site}', [SiteApprovalController::class, 'approve'])->name('approve'); 
+    // });
 
 
-     // --- guarantors Routes ---
+     // --- investors Routes ---
      Route::prefix('investor0')->name('investor0.')->group(function () {
         Route::get('/', [InvestorController::class, 'index'])->name('index'); 
         Route::get('/create', [InvestorController::class, 'create'])->name('create'); 
         Route::post('/', [InvestorController::class, 'store'])->name('store'); 
         Route::post('/directstore', [InvestorController::class, 'directstore'])->name('directstore');
-        Route::get('/{guarantor}/edit', [InvestorController::class, 'edit'])->name('edit'); 
-        Route::put('/{guarantor}', [InvestorController::class, 'update'])->name('update');
+        Route::get('/{investor}/edit', [InvestorController::class, 'edit'])->name('edit'); 
+        Route::put('/{investor}', [InvestorController::class, 'update'])->name('update');
         Route::get('/search', [InvestorController::class, 'search'])->name('search'); 
     });
 
-    // --- guarantors Routes ---
-    Route::prefix('investor1')->name('investor1.')->group(function () {
+    // // --- investors Routes ---
+     Route::prefix('investor1')->name('investor1.')->group(function () {
         Route::get('/', [InvestorController::class, 'index'])->name('index'); 
         Route::get('/create', [InvestorController::class, 'create'])->name('create'); 
         Route::post('/', [InvestorController::class, 'store'])->name('store'); 
         Route::post('/directstore', [InvestorController::class, 'directstore'])->name('directstore');
-        Route::get('/{guarantor}/edit', [InvestorController::class, 'edit'])->name('edit'); 
-        Route::put('/{guarantor}', [InvestorController::class, 'update'])->name('update');
+        Route::get('/{investor}/edit', [InvestorController::class, 'edit'])->name('edit'); 
+        Route::put('/{investor}', [InvestorController::class, 'update'])->name('update');
         Route::get('/search', [InvestorController::class, 'search'])->name('search'); 
     });
 
-       
-
     
-    // Routes for loan Setup (Version 3)
+    // Routes for site Setup (Version 3)
     Route::prefix('systemconfiguration0')->name('systemconfiguration0.')->group(function () {
 
         // Main index route
@@ -149,97 +138,71 @@ Route::middleware('auth')->group(function () {
 
         // --- sectors Routes ---
         Route::prefix('sectors')->name('sectors.')->group(function () {
-            Route::get('/', [SectorController::class, 'index'])->name('index'); // Lists item groups
-            Route::get('/create', [SectorController::class, 'create'])->name('create'); // Show form to create new item group
-            Route::post('/', [SectorController::class, 'store'])->name('store'); // Store new item group
-            Route::get('/{sector}/edit', [SectorController::class, 'edit'])->name('edit'); // Show form to edit item group
-            Route::put('/{sector}', [SectorController::class, 'update'])->name('update'); // Update item group
-            Route::delete('/{sector}', [SectorController::class, 'destroy'])->name('destroy');
-            Route::get('/search', [SectorController::class, 'search'])->name('search');
+            Route::get('/', [SiteSectorController::class, 'index'])->name('index'); 
+            Route::get('/create', [SiteSectorController::class, 'create'])->name('create'); 
+            Route::post('/', [SiteSectorController::class, 'store'])->name('store'); 
+            Route::get('/{sector}/edit', [SiteSectorController::class, 'edit'])->name('edit'); 
+            Route::put('/{sector}', [SiteSectorController::class, 'update'])->name('update'); 
+            Route::delete('/{sector}', [SiteSectorController::class, 'destroy'])->name('destroy');
+            Route::get('/search', [SiteSectorController::class, 'search'])->name('search');
         });
       
 
-        // --- feestype Routes ---
-        Route::prefix('feestypes')->name('feestypes.')->group(function () {
-            Route::get('/', [BLSFeesTypeController::class, 'index'])->name('index'); 
-            Route::get('/create', [BLSFeesTypeController::class, 'create'])->name('create');
-            Route::post('/', [BLSFeesTypeController::class, 'store'])->name('store'); 
-            Route::get('/{feestype}/edit', [BLSFeesTypeController::class, 'edit'])->name('edit');
-            Route::put('/{feestype}', [BLSFeesTypeController::class, 'update'])->name('update');
-            Route::delete('/{feestype}', [BLSFeesTypeController::class, 'destroy'])->name('destroy');
-            Route::get('/search', [BLSFeesTypeController::class, 'search'])->name('search'); 
+        // --- activities Routes ---
+        Route::prefix('activities')->name('activities.')->group(function () {
+            Route::get('/', [SiteActivityController::class, 'index'])->name('index'); 
+            Route::get('/create', [SiteActivityController::class, 'create'])->name('create');
+            Route::post('/', [SiteActivityController::class, 'store'])->name('store'); 
+            Route::get('/{activity}/edit', [SiteActivityController::class, 'edit'])->name('edit');
+            Route::put('/{activity}', [SiteActivityController::class, 'update'])->name('update');
+            Route::delete('/{activity}', [SiteActivityController::class, 'destroy'])->name('destroy');
+            Route::get('/search', [SiteActivityController::class, 'search'])->name('search'); 
         });
 
-        // --- packages Routes ---
-        Route::prefix('loanpackages')->name('loanpackages.')->group(function () {
-            Route::get('/', [BLSPackageController::class, 'index'])->name('index'); 
-            Route::get('/create', [BLSPackageController::class, 'create'])->name('create');
-            Route::post('/', [BLSPackageController::class, 'store'])->name('store'); 
-            Route::get('/{loanpackage}/edit', [BLSPackageController::class, 'edit'])->name('edit'); 
-            Route::put('/{loanpackage}', [BLSPackageController::class, 'update'])->name('update'); 
-            Route::get('/search', [BLSPackageController::class, 'search'])->name('search'); 
+        // --- allocationmethods Routes ---
+        Route::prefix('allocationmethods')->name('allocationmethods.')->group(function () {
+            Route::get('/', [SiteAllocationMethodController::class, 'index'])->name('index'); 
+            Route::get('/create', [SiteAllocationMethodController::class, 'create'])->name('create');
+            Route::post('/', [SiteAllocationMethodController::class, 'store'])->name('store'); 
+            Route::get('/{allocationmethod}/edit', [SiteAllocationMethodController::class, 'edit'])->name('edit'); 
+            Route::put('/{allocationmethod}', [SiteAllocationMethodController::class, 'update'])->name('update'); 
+            Route::get('/search', [SiteAllocationMethodController::class, 'search'])->name('search'); 
         });  
 
-    });
+        // --- jurisdictions Routes ---
+        Route::prefix('jurisdictions')->name('jurisdictions.')->group(function () {
+            Route::get('/', [SiteJurisdictionController::class, 'index'])->name('index'); 
+            Route::get('/create', [SiteJurisdictionController::class, 'create'])->name('create');
+            Route::post('/', [SiteJurisdictionController::class, 'store'])->name('store'); 
+            Route::get('/{jurisdiction}/edit', [SiteJurisdictionController::class, 'edit'])->name('edit'); 
+            Route::put('/{jurisdiction}', [SiteJurisdictionController::class, 'update'])->name('update'); 
+            Route::get('/search', [SiteJurisdictionController::class, 'search'])->name('search'); 
+        });  
 
-    
-    // Routes for Expenses Setup (Version 3)
-    Route::prefix('systemconfiguration1')->name('systemconfiguration1.')->group(function () {
+         // --- opportunitytypes Routes ---
+         Route::prefix('opportunitytypes')->name('opportunitytypes.')->group(function () {
+            Route::get('/', [SiteOpportunityTypeController::class, 'index'])->name('index'); 
+            Route::get('/create', [SiteOpportunityTypeController::class, 'create'])->name('create');
+            Route::post('/', [SiteOpportunityTypeController::class, 'store'])->name('store'); 
+            Route::get('/{opportunitytype}/edit', [SiteOpportunityTypeController::class, 'edit'])->name('edit'); 
+            Route::put('/{opportunitytype}', [SiteOpportunityTypeController::class, 'update'])->name('update'); 
+            Route::get('/search', [SiteOpportunityTypeController::class, 'search'])->name('search'); 
+        });  
 
-        // Main index route
-        Route::get('/', function () {
-            return Inertia::render('SystemConfiguration/ExpensesSetup/Index');
-        })->name('index'); // Added a proper route name for the index.
+        // --- utilities Routes ---
+        Route::prefix('utilities')->name('utilities.')->group(function () {
+            Route::get('/', [SiteUtilityController::class, 'index'])->name('index'); 
+            Route::get('/create', [SiteUtilityController::class, 'create'])->name('create');
+            Route::post('/', [SiteUtilityController::class, 'store'])->name('store'); 
+            Route::get('/{utility}/edit', [SiteUtilityController::class, 'edit'])->name('edit'); 
+            Route::put('/{utility}', [SiteUtilityController::class, 'update'])->name('update'); 
+            Route::get('/search', [SiteUtilityController::class, 'search'])->name('search'); 
+        });  
 
-
-         // --- itemgroups Routes ---
-        Route::prefix('itemgroups')->name('itemgroups.')->group(function () {
-            Route::get('/', [SEXPItemGroupController::class, 'index'])->name('index'); 
-            Route::get('/create', [SEXPItemGroupController::class, 'create'])->name('create'); 
-            Route::post('/', [SEXPItemGroupController::class, 'store'])->name('store'); 
-            Route::get('/{itemgroup}/edit', [SEXPItemGroupController::class, 'edit'])->name('edit'); 
-            Route::put('/{itemgroup}', [SEXPItemGroupController::class, 'update'])->name('update'); 
-            Route::delete('/{itemgroup}', [SEXPItemGroupController::class, 'destroy'])->name('destroy');
-            Route::get('/search', [SEXPItemGroupController::class, 'search'])->name('search'); 
-        });
-
-          // --- items Routes ---
-        Route::prefix('items')->name('items.')->group(function () {
-            Route::get('/', [SEXPItemController::class, 'index'])->name('index');
-            Route::get('/create', [SEXPItemController::class, 'create'])->name('create');
-            Route::post('/', [SEXPItemController::class, 'store'])->name('store');
-            Route::get('/{item}/edit', [SEXPItemController::class, 'edit'])->name('edit');
-            Route::put('/{item}', [SEXPItemController::class, 'update'])->name('update'); 
-            Route::delete('/{item}', [SEXPItemController::class, 'destroy'])->name('destroy');
-            Route::get('/search', [SEXPItemController::class, 'search'])->name('search'); 
-        });
-        
-
-    });
-
-    // Routes for Account Setup (Version 3)
-    Route::prefix('systemconfiguration3')->name('systemconfiguration3.')->group(function () {
-
-        // Main index route
-        Route::get('/', function () {
-            return Inertia::render('SystemConfiguration/AccountSetup/Index');
-        })->name('index'); // Added a proper route name for the index.
-
-         // --- chartofaccount Routes ---
-         Route::prefix('chartofaccounts')->name('chartofaccounts.')->group(function () {
-            Route::get('/', [ChartOfAccountController::class, 'index'])->name('index');
-            Route::get('/create', [ChartOfAccountController::class, 'create'])->name('create');
-            Route::post('/', [ChartOfAccountController::class, 'store'])->name('store');
-            Route::get('/{chartofaccount}/edit', [ChartOfAccountController::class, 'edit'])->name('edit');
-            Route::put('/{chartofaccount}', [ChartOfAccountController::class, 'update'])->name('update'); 
-            Route::delete('/{chartofaccount}', [ChartOfAccountController::class, 'destroy'])->name('destroy');
-            Route::get('/search', [ChartOfAccountController::class, 'search'])->name('search');
-        });   
-
-    });
+    });       
  
     // Routes for Location Setup (Version 3)
-    Route::prefix('systemconfiguration4')->name('systemconfiguration4.')->group(function () {
+    Route::prefix('systemconfiguration1')->name('systemconfiguration1.')->group(function () {
 
         // Main index route
         Route::get('/', function () {
@@ -303,7 +266,7 @@ Route::middleware('auth')->group(function () {
 
 
     // Routes for Facility Setup (Version 3)
-    Route::prefix('systemconfiguration5')->name('systemconfiguration5.')->group(function () {
+    Route::prefix('systemconfiguration2')->name('systemconfiguration2.')->group(function () {
 
         // Main index route
         Route::get('/', function () {

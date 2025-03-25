@@ -115,7 +115,7 @@ export default function Index({ auth, landowners, filters }) {
                             {landowners.data.length > 0 ? (
                                 landowners.data.map((landowner, index) => (
                                     <tr key={landowner.id} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                                        <td className="border-b p-3 text-gray-700">{landowner.landowner_type}</td>
+                                        <td className="border-b p-3 text-gray-700">{landowner.owner_type}</td>
                                         <td className="border-b p-3 text-gray-700">{landowner.first_name}</td>
                                         <td className="border-b p-3 text-gray-700">{landowner.other_names}</td>
                                         <td className="border-b p-3 text-gray-700">{landowner.surname}</td>

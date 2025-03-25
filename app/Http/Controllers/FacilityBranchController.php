@@ -56,7 +56,7 @@ class FacilityBranchController extends Controller
             'facilityoption_id' => $validated['facilityoption_id'],          
         ]);
 
-        return redirect()->route('systemconfiguration5.facilitybranches.index')
+        return redirect()->route('systemconfiguration2.facilitybranches.index')
             ->with('success', 'FacilityBranch created successfully.');
     }
 
@@ -88,7 +88,7 @@ class FacilityBranchController extends Controller
             'facilityoption_id' => $validated['facilityoption_id'],                
         ]);
 
-        return redirect()->route('systemconfiguration5.facilitybranches.index')
+        return redirect()->route('systemconfiguration2.facilitybranches.index')
             ->with('success', 'FacilityBranch updated successfully.');
     }
 
@@ -99,7 +99,7 @@ class FacilityBranchController extends Controller
     {
         $facilitybranch->delete();
 
-        return redirect()->route('systemconfiguration5.facilitybranches.index')
+        return redirect()->route('systemconfiguration2.facilitybranches.index')
             ->with('success', 'FacilityBranch deleted successfully.');
     }
 

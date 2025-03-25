@@ -2,9 +2,12 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {    
-    faCreditCard,   // Sector    
-    faLayerGroup,   // Billing Item Group
-    faListAlt,      // Packages   
+    faBuilding,      // Sector    
+    faTasks,        // Activities
+    faExchangeAlt,  // Allocation Methods
+    faMapMarkedAlt, // Jurisdiction
+    faBriefcase,    // Opportunity Type
+    faPlug,        // Utilities
 } from '@fortawesome/free-solid-svg-icons';
 import { Link } from '@inertiajs/react';
 
@@ -26,60 +29,88 @@ export default function Index() {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">                 
-
+                    
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">                      
-
                         {/* Sector */}
-                        <div className="bg-white shadow-md rounded-lg p-6">
-                            <div className="flex items-center">
-                                <div className="p-3 bg-green-500 rounded-full">
-                                    <FontAwesomeIcon icon={faCreditCard} className="text-white" aria-label="Sector" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-gray-600">Sector</p>
-                                    <h3 className="text-2xl font-bold">{sectorCount}</h3>
-                                    <div className="mt-2">
-                                        <Link href={route('systemconfiguration0.sectors.index')} className="text-green-500 hover:underline">Manage Sector</Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>                       
+                        <DashboardCard 
+                            title="Sector" 
+                            count={sectorCount} 
+                            icon={faBuilding} 
+                            color="bg-green-500"
+                            routeName="systemconfiguration0.sectors.index"
+                        />
 
-                        {/* Fees Types */}
-                        <div className="bg-white shadow-md rounded-lg p-6">
-                            <div className="flex items-center">
-                                <div className="p-3 bg-purple-500 rounded-full">
-                                    <FontAwesomeIcon icon={faLayerGroup} className="text-white" aria-label="Fees Types" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-gray-600">Fees Types</p>
-                                    <h3 className="text-2xl font-bold">{feestypeCount}</h3>
-                                    <div className="mt-2">
-                                        <Link href={route('systemconfiguration0.feestypes.index')} className="text-purple-500 hover:underline">Manage Fees Types</Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Activities */}
+                        <DashboardCard 
+                            title="Activities" 
+                            count={feestypeCount} 
+                            icon={faTasks} 
+                            color="bg-purple-500"
+                            routeName="systemconfiguration0.activities.index"
+                        />
 
-                        {/* Packages */}
-                        <div className="bg-white shadow-md rounded-lg p-6">
-                            <div className="flex items-center">
-                                <div className="p-3 bg-green-500 rounded-full">
-                                    <FontAwesomeIcon icon={faListAlt} className="text-white" aria-label="Packages" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-gray-600">Packages</p>
-                                    <h3 className="text-2xl font-bold">{packageCount}</h3>
-                                    <div className="mt-2">
-                                        <Link href={route('systemconfiguration0.loanpackages.index')} className="text-green-500 hover:underline">Manage Packages</Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Allocation Methods */}
+                        <DashboardCard 
+                            title="Allocation Methods" 
+                            count={packageCount} 
+                            icon={faExchangeAlt} 
+                            color="bg-blue-500"
+                            routeName="systemconfiguration0.allocationmethods.index"
+                        />
+
+                        {/* Jurisdiction */}
+                        <DashboardCard 
+                            title="Jurisdiction" 
+                            count={packageCount} 
+                            icon={faMapMarkedAlt} 
+                            color="bg-red-500"
+                            routeName="systemconfiguration0.jurisdictions.index"
+                        />
                     </div>     
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6  mt-6">                      
+                        {/* Opportunity Type */}
+                        <DashboardCard 
+                            title="Opportunity Type" 
+                            count={sectorCount} 
+                            icon={faBriefcase} 
+                            color="bg-green-500"
+                            routeName="systemconfiguration0.opportunitytypes.index"
+                        />
+
+                        {/* Utilities */}
+                        <DashboardCard 
+                            title="Utilities" 
+                            count={feestypeCount} 
+                            icon={faPlug} 
+                            color="bg-purple-500"
+                            routeName="systemconfiguration0.utilities.index"
+                        />
+                    </div>    
                 </div>
             </div>
         </AuthenticatedLayout>
     );
 }
 
+// Reusable Dashboard Card Component
+function DashboardCard({ title, count, icon, color, routeName }) {
+    return (
+        <div className="bg-white shadow-md rounded-lg p-6">
+            <div className="flex items-center">
+                <div className={`p-3 ${color} rounded-full`}>
+                    <FontAwesomeIcon icon={icon} className="text-white" aria-label={title} />
+                </div>
+                <div className="ml-4">
+                    <p className="text-gray-600">{title}</p>
+                    <h3 className="text-2xl font-bold">{count}</h3>
+                    <div className="mt-2">
+                        <Link href={route(routeName)} className={`${color.replace('bg-', 'text-')} hover:underline`}>
+                            Manage {title}
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

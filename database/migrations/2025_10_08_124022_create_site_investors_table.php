@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('site_id')->constrained('sites')->onDelete('cascade'); // Enforce site association
-            $table->foreignId('investor_id')->nullable()->constrained('investors')->onDelete('set null');
+            $table->foreignId('investor_id')->nullable()->constrained('investors')->onDelete('set null');            
+            $table->string('description')->nullable();
             $table->string('collateral_doc')->nullable(); // Path to the uploaded collateral doc
             $table->string('collateral_docname')->nullable();
             $table->timestamps();

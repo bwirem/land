@@ -39,7 +39,7 @@ export default function Index() { // Pass data as props
                                     <p className="text-gray-600">Country</p>
                                     <h3 className="text-2xl font-bold">{nocountry}</h3>
                                     <div className="mt-2">                                        
-                                        <Link href={route('systemconfiguration4.countries.index')} className="text-purple-500 hover:underline">Manage Countries</Link>
+                                        <Link href={route('systemconfiguration1.countries.index')} className="text-purple-500 hover:underline">Manage Countries</Link>
                                     </div>
                                 </div>
                             </div>
@@ -56,7 +56,7 @@ export default function Index() { // Pass data as props
                                     <h3 className="text-2xl font-bold">{noregion}</h3>
                                     <div className="mt-2">                                      
 
-                                        <Link href={route('systemconfiguration4.regions.index')} className="text-purple-500 hover:underline">Manage Regions</Link>
+                                        <Link href={route('systemconfiguration1.regions.index')} className="text-purple-500 hover:underline">Manage Regions</Link>
                                     </div>
                                 </div>
                             </div>
@@ -72,7 +72,7 @@ export default function Index() { // Pass data as props
                                     <p className="text-gray-600">District</p>
                                     <h3 className="text-2xl font-bold">{nodistrict}</h3>
                                     <div className="mt-2">
-                                        <Link href={route('systemconfiguration4.districts.index')} className="text-purple-500 hover:underline">Manage Districts</Link>
+                                        <Link href={route('systemconfiguration1.districts.index')} className="text-purple-500 hover:underline">Manage Districts</Link>
                                     </div>
                                 </div>
                             </div>
@@ -88,7 +88,7 @@ export default function Index() { // Pass data as props
                                     <p className="text-gray-600">Ward</p>
                                     <h3 className="text-2xl font-bold">{noward}</h3>
                                     <div className="mt-2">                                     
-                                        <Link href={route('systemconfiguration4.wards.index')} className="text-purple-500 hover:underline">Manage Wards</Link>
+                                        <Link href={route('systemconfiguration1.wards.index')} className="text-purple-500 hover:underline">Manage Wards</Link>
                                     </div>
                                 </div>
                             </div>
@@ -106,7 +106,7 @@ export default function Index() { // Pass data as props
                                     <p className="text-gray-600">Street</p>
                                     <h3 className="text-2xl font-bold">{nostreet}</h3>
                                     <div className="mt-2">                                   
-                                        <Link href={route('systemconfiguration4.streets.index')} className="text-purple-500 hover:underline">Manage Streets</Link>
+                                        <Link href={route('systemconfiguration1.streets.index')} className="text-purple-500 hover:underline">Manage Streets</Link>
                                     </div>
                                 </div>
                             </div>

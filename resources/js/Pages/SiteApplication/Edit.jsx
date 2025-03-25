@@ -1,0 +1,912 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head,Link, useForm } from '@inertiajs/react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faSave, faTimesCircle, faFileUpload, faTrash, faEye, } from '@fortawesome/free-solid-svg-icons';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+import axios from 'axios';
+
+import Modal from '../../Components/CustomModal.jsx';
+
+// Utility function for debouncing
+const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), delay);
+    };
+};
+
+export default function Edit({auth, site, sectors,activities,allocationMethods,
+    jurisdictions,opportunityTypes,utilities,facilityBranches }) {
+    // Form state using Inertia's useForm hook
+    const { data, setData, put, errors, processing, reset } = useForm({
+        owner_type: site.owner_type || 'individual', // Default to 'individual' if undefined
+        first_name: site.first_name || '',
+        other_names: site.other_names || '',
+        surname: site.surname || '',
+        company_name: site.company_name || '',
+        email: site.email || '',
+        phone: site.phone || '',
+        
+        landowner_id: site.landowner_id || null,
+        sector_id: site.sector_id || '',
+        activity_id: site.activity_id || '',        
+        allocationmethod_id: site.allocationmethod_id || '',    
+        jurisdiction_id: site.jurisdiction_id || '',
+        opportunitytype_id: site.opportunitytype_id || '',
+        utility_id: site.utility_id || '',
+        
+        project_description: site.project_description || '',
+        stage: site.stage || 1, // Default stage to 1 if not provided
+        applicationForm: null, // To store NEW file object (if any)
+        facilitybranch_id: site.facilitybranch_id || null,
+    });
+    
+
+    // Landowner Search State (Bring back relevant parts from Create.jsx)
+    const [landownerSearchQuery, setLandownerSearchQuery] = useState(site.owner_type === 'company' ? site.company_name : `${site.first_name} ${site.surname}`);
+    const [landownerSearchResults, setLandownerSearchResults] = useState([]);
+    const [showLandownerDropdown, setShowLandownerDropdown] = useState(false);
+    const landownerDropdownRef = useRef(null);
+    const landownerSearchInputRef = useRef(null);
+    const [landownerIDError, setLandownerIDError] = useState(null);
+
+    // New Landowner Modal State (Bring back relevant parts from Create.jsx)
+    const [newLandownerModalOpen, setNewLandownerModalOpen] = useState(false);
+    const [newLandowner, setNewLandowner] = useState({
+        owner_type: 'individual',
+        first_name: '',
+        other_names: '',
+        surname: '',
+        company_name: '',
+        email: '',
+        phone: '',
+    });
+    const [newLandownerModalLoading, setNewLandownerModalLoading] = useState(false);
+    const [newLandownerModalSuccess, setNewLandownerModalSuccess] = useState(false);
+
+    // Modal state (unchanged)
+    const [modalState, setModalState] = useState({
+        isOpen: false,
+        message: '',
+        isAlert: false,
+        itemToRemoveIndex: null,
+    });
+
+    // Saving state (unchanged)
+    const [isSaving, setIsSaving] = useState(false);
+    const [isNexting, setIsNexting] = useState(false);
+
+    const [filePreviewUrl, setFilePreviewUrl] = useState(null); // Track the URL of file
+    const [applicationFormError, setApplicationFormError] = useState('');
+
+    // Fetch Landowners dynamically (using Inertia)
+    const fetchLandowners = useCallback((query) => {
+        if (!query.trim()) {
+            setLandownerSearchResults([]);
+            return;
+        }
+
+        axios.get(route('landowner0.search'), { params: { query } })
+            .then((response) => {
+                setLandownerSearchResults(response.data.landowners.slice(0, 5));
+            })
+            .catch((error) => {
+                console.error('Error fetching landowners:', error);
+                showAlert('Failed to fetch landowners. Please try again later.');
+                setLandownerSearchResults([]);
+            });
+    }, []);
+
+    // Debounced landowner search handler
+    const debouncedLandownerSearch = useMemo(() => debounce(fetchLandowners, 300), [fetchLandowners]);
+
+    // Fetch landowners on search query change
+    useEffect(() => {
+        if (landownerSearchQuery.trim()) {
+            debouncedLandownerSearch(landownerSearchQuery);
+        } else {
+            setLandownerSearchResults([]);
+        }
+    }, [landownerSearchQuery, debouncedLandownerSearch]);
+
+     const handleSubmit = async (e) => {
+        e.preventDefault();
+        // Check if applicationForm is null
+        if (!data.applicationForm && !site.application_form) {
+            setApplicationFormError('Title Deed is required.');
+            return;
+        }
+        setApplicationFormError('');
+
+        setIsSaving(true);
+
+        const formData = new FormData();
+
+        // Explicitly append each field from the data object. Important for correct ordering.
+        formData.append('owner_type', data.owner_type || '');
+        formData.append('first_name', data.first_name || '');
+        formData.append('other_names', data.other_names || '');
+        formData.append('surname', data.surname || '');
+        formData.append('company_name', data.company_name || '');
+        formData.append('email', data.email || '');
+        formData.append('phone', data.phone || '');
+        formData.append('landowner_id', data.landowner_id || '');  //Important to treat as a string or number depending on your backend
+        
+        formData.append('sector_id', data.sector_id || '');
+        formData.append('activity_id', data.activity_id || '');
+        formData.append('allocationmethod_id', data.allocationmethod_id || '');
+        formData.append('jurisdiction_id', data.jurisdiction_id || '');
+        formData.append('opportunitytype_id', data.opportunitytype_id || '');
+        formData.append('utility_id', data.utility_id || '');
+        formData.append('project_description', data.project_description || '');
+        
+        formData.append('stage', data.stage || '');
+        formData.append('facilitybranch_id', data.facilitybranch_id || '');      
+
+        // Append the file if it exists.  Crucially, append even if it's `null` to signal no new file.
+        formData.append('applicationForm', data.applicationForm);
+
+        formData.append('_method', 'PUT'); // Method Spoofing
+
+        try {
+            const response = await axios.post(route('landowner1.update', site.id), formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            setIsSaving(false);
+            resetForm();
+
+             //Manually redirect since it is a success
+             window.location.href = route('landowner1.index');
+
+        } catch (error) {
+            setIsSaving(false);
+              console.error('Full error object:', error);  // Log the entire error for inspection
+
+            if (error.response && error.response.data) {
+                console.error('Error data:', error.response.data);
+                setData('errors', error.response.data.errors);
+            } else {
+                console.error("Error updating site:", error);
+                showAlert('An error occurred while saving the application.');
+            }
+        }
+    };
+
+    const handleNext = async (e) => {
+        //e.preventDefault();
+        // Check if applicationForm is null
+        if (!data.applicationForm && !site.application_form) {
+            setApplicationFormError('Title Deed is required.');
+            return;
+        }
+        setApplicationFormError('');
+
+        setIsNexting(true);
+
+        const formData = new FormData();
+
+        // Explicitly append each field from the data object. Important for correct ordering.
+        formData.append('owner_type', data.owner_type || '');
+        formData.append('first_name', data.first_name || '');
+        formData.append('other_names', data.other_names || '');
+        formData.append('surname', data.surname || '');
+        formData.append('company_name', data.company_name || '');
+        formData.append('email', data.email || '');
+        formData.append('phone', data.phone || '');
+        formData.append('landowner_id', data.landowner_id || '');  
+            
+        formData.append('sector_id', data.sector_id || '');
+        formData.append('activity_id', data.activity_id || '');
+        formData.append('allocationmethod_id', data.allocationmethod_id || '');
+        formData.append('jurisdiction_id', data.jurisdiction_id || '');
+        formData.append('opportunitytype_id', data.opportunitytype_id || '');
+        formData.append('utility_id', data.utility_id || '');
+        formData.append('project_description', data.project_description || '');
+
+        formData.append('stage',2);
+        formData.append('facilitybranch_id', data.facilitybranch_id || '');
+
+        // Append the file if it exists.  Crucially, append even if it's `null` to signal no new file.
+        formData.append('applicationForm', data.applicationForm);
+
+        formData.append('_method', 'PUT'); // Method Spoofing
+
+        try {
+            const response = await axios.post(route('landowner1.update', site.id), formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            setIsNexting(false);
+            resetForm();
+
+             //Manually redirect since it is a success
+             window.location.href = route('landowner1.index');
+
+        } catch (error) {
+            setIsNexting(false);
+              console.error('Full error object:', error);  // Log the entire error for inspection
+
+            if (error.response && error.response.data) {
+                console.error('Error data:', error.response.data);
+                setData('errors', error.response.data.errors);
+            } else {
+                console.error("Error updating site:", error);
+                showAlert('An error occurred while saving the application.');
+            }
+        }
+    };
+
+    // Reset the form
+    const resetForm = () => {
+        reset();
+        setLandownerIDError(null);
+        showAlert('Application updated successfully!');
+    };
+
+    const handleLandownerSearchChange = (e) => {
+        const query = e.target.value;
+        setLandownerSearchQuery(query);
+        setLandownerSearchResults([]); // Clear previous results
+        setShowLandownerDropdown(!!query.trim());
+
+        // Update appropriate fields based on landowner type
+        setData((prevData) => ({
+            ...prevData,
+            first_name: '',
+            other_names: '',
+            surname: '',
+            company_name: '',
+            email: '',
+            phone: '',
+            landowner_id: null,
+        }));
+    };
+
+    const handleClearLandownerSearch = () => {
+        setLandownerSearchQuery('');
+        setLandownerSearchResults([]);
+        setShowLandownerDropdown(false);
+        if (landownerSearchInputRef.current) {
+            landownerSearchInputRef.current.focus();
+        }
+
+        setData((prevData) => ({
+            ...prevData,
+            first_name: '',
+            other_names: '',
+            surname: '',
+            company_name: '',
+            email: '',
+            phone: '',
+            landowner_id: null,
+        }));
+    };
+
+    // Handle landowner selection
+    const selectLandowner = (selectedLandowner) => {
+        setData((prevData) => ({
+            ...prevData,
+            owner_type: selectedLandowner.owner_type,
+            first_name: selectedLandowner.first_name || '',
+            other_names: selectedLandowner.other_names || '',
+            surname: selectedLandowner.surname || '',
+            company_name: selectedLandowner.company_name || '',
+            email: selectedLandowner.email,
+            phone: selectedLandowner.phone || '',
+            landowner_id: selectedLandowner.id,
+        }));
+
+        setLandownerSearchQuery('');
+        setLandownerSearchResults([]);
+        setShowLandownerDropdown(false);
+    };
+
+    // Function to handle new landowner button click (Open the modal)
+    const handleNewLandownerClick = () => {
+        setNewLandownerModalOpen(true);
+        setNewLandownerModalSuccess(false); //reset state in case open again
+        setNewLandowner({
+            owner_type: 'individual',
+            first_name: '',
+            other_names: '',
+            surname: '',
+            company_name: '',
+            email: '',
+            phone: '',
+        });
+    };
+    // Function to close the modal
+    const handleNewLandownerModalClose = () => {
+        setNewLandownerModalOpen(false);
+        setNewLandownerModalLoading(false);
+        setNewLandownerModalSuccess(false);
+    };
+
+    // Function to confirm new landowner (you should implement saving logic here)
+    const handleNewLandownerModalConfirm = async () => {
+        setNewLandownerModalLoading(true);
+        try {
+            const response = await axios.post(route('systemconfiguration0.landowners.directstore'), newLandowner);
+
+            if (response.data && response.data.id) {
+                setData((prevData) => ({
+                    ...prevData,
+                    owner_type: response.data.owner_type,
+                    first_name: response.data.first_name,
+                    other_names: response.data.other_names,
+                    surname: response.data.surname,
+                    company_name: response.data.company_name,
+                    email: response.data.email,
+                    phone: response.data.phone,
+                    landowner_id: response.data.id,
+                }));
+
+                setNewLandownerModalSuccess(true);
+            } else {
+                showAlert('Error creating new landowner!');
+            }
+        } catch (error) {
+            console.error("Error creating new landowner:", error);
+            showAlert('Failed to create new landowner. Please try again.');
+        } finally {
+            setNewLandownerModalLoading(false);
+            setTimeout(() => {
+                setNewLandownerModalOpen(false);
+                setNewLandownerModalSuccess(false);
+            }, 1000)
+
+        }
+
+    };
+
+      
+    const showAlert = (message) => {
+        setModalState({
+            isOpen: false,
+            message: message,
+            isAlert: false,
+            itemToRemoveIndex: null,
+        });
+    };
+    
+    
+    const handleApplicationFormChange = (e) => {
+        const file = e.target.files[0];
+    
+        if (file) {
+            const maxSizeInBytes = 2048 * 1024; // 2MB (adjust as needed)
+    
+            if (file.size > maxSizeInBytes) {
+                setApplicationFormError('File size exceeds 2MB. Please upload a smaller file.');
+                setData('applicationForm', null);  // Clear the file
+                return;
+            }
+    
+            setApplicationFormError('');
+            setData('applicationForm', file);           
+    
+        } else {
+            setData('applicationForm', null);
+        }
+    };
+    
+
+    useEffect(() => {
+        // Generate preview when site.application_form changes (initial load)
+        if (site.application_form) {
+            setFilePreviewUrl(`/storage/${site.application_form}`); // Assuming the URL is directly accessible
+        }
+    }, [site.application_form]);
+
+    return (
+        <AuthenticatedLayout
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Application</h2>}
+        >
+            <Head title="Edit Application" />
+            <div className="py-12">
+                <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
+                    <div className="bg-white p-6 shadow sm:rounded-lg">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Landowner Search and New Landowner Button */}
+                            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                                <div className="relative flex-1" ref={landownerDropdownRef}>
+                                    <div className="flex items-center justify-between h-10">
+                                        <label htmlFor="landowner_name" className="block text-sm font-medium text-gray-700 mr-2">
+                                            Landowner Name
+                                        </label>
+                                        {/* New Landowner Button Added Here */}
+                                        <button
+                                            type="button"
+                                            onClick={handleNewLandownerClick}
+                                            className="bg-green-500 text-white rounded p-2 flex items-center space-x-2"
+                                        >
+                                            <FontAwesomeIcon icon={faPlus} />
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Search landowner..."
+                                        value={landownerSearchQuery}
+                                        onChange={handleLandownerSearchChange}
+                                        onFocus={() => setShowLandownerDropdown(!!landownerSearchQuery.trim())}
+                                        className={`w-full border p-2 rounded text-sm pr-10 ${landownerIDError ? 'border-red-500' : ''}`}
+                                        ref={landownerSearchInputRef}
+                                        autoComplete="off"
+
+                                    />
+                                    {landownerIDError && <p className="text-sm font-medium text-gray-700 mt-1">{landownerIDError}</p>}
+                                    {landownerSearchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={handleClearLandownerSearch}
+                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                        >
+                                            <FontAwesomeIcon icon={faTimesCircle} />
+                                        </button>
+                                    )}
+                                    {showLandownerDropdown && (
+                                        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-md max-h-48 overflow-y-auto">
+                                            {landownerSearchResults.length > 0 ? (
+                                                landownerSearchResults.map((landowner) => (
+                                                    <li
+                                                        key={landowner.id}
+                                                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                                                        onClick={() => selectLandowner(landowner)}
+                                                    >
+                                                        {landowner.owner_type === 'company' ? landowner.company_name : `${landowner.first_name} ${landowner.surname}`}
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li className="p-2 text-gray-500">No landowners found.</li>
+                                            )}
+                                        </ul>
+                                    )}
+                                   
+                                    {/* Display Landowner Details After Selection */}
+                                    {data.landowner_id && (
+                                        <section className="border-b border-gray-200 pb-4">
+                                            <h4 className="text-md font-semibold text-gray-700 mb-3">Landowner Information</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Landowner Type:</label>
+                                                    <p className="mt-1 text-sm text-gray-500">{data.owner_type}</p>
+                                                </div>
+
+                                                {data.owner_type === 'individual' ? (
+                                                    <>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700">First Name:</label>
+                                                            <p className="mt-1 text-sm text-gray-500">{data.first_name || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700">Other Names:</label>
+                                                            <p className="mt-1 text-sm text-gray-500">{data.other_names || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700">Surname:</label>
+                                                            <p className="mt-1 text-sm text-gray-500">{data.surname || 'N/A'}</p>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700">Company Name:</label>
+                                                        <p className="mt-1 text-sm text-gray-500">{data.company_name || 'N/A'}</p>
+                                                    </div>
+                                                )}
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Email:</label>
+                                                    <p className="mt-1 text-sm text-gray-500">{data.email || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Phone:</label>
+                                                    <p className="mt-1 text-sm text-gray-500">{data.phone || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        </section>
+                                    )}
+                                </div>
+                            </div>
+
+
+                             {/* Location Deatils Section */}
+                             <section className="border-b border-gray-200 pb-4">
+                                <h4 className="text-md font-semibold text-gray-700 mb-3">Location Information</h4>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label htmlFor="facilitybranch" className="block text-sm font-medium text-gray-700">Branch</label>
+                                            <select
+                                                id="facilitybranch"
+                                                value={data.facilitybranch_id}    
+                                                onChange={(e) => setData('facilitybranch_id', e.target.value)}                                    
+                                                className="w-full border p-2 rounded text-sm"
+                                                required
+                                            >
+                                                <option value="" disabled>Select Branch</option>
+                                                {facilityBranches.map(branch => (
+                                                    <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                                ))}
+                                            </select>
+                                            {errors.facilitybranch && <p className="text-sm text-red-600">{errors.facilitybranch}</p>}
+                                        </div>                                                                        
+                                    </div>
+                                </div> 
+                            </section>                            
+
+                            {/* Site Details Section */}
+                            <section className="border-b border-gray-200 pb-6">
+                                <h4 className="text-lg font-semibold text-gray-800 mb-4">Site Information</h4>
+
+                                {/* First Row: Sector, Jurisdiction, Opportunity Type */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                                    {/* Sector */}
+                                    <div>
+                                        <label htmlFor="sector" className="block text-sm font-medium text-gray-700">Sector</label>
+                                        <select
+                                            id="sector"
+                                            value={data.sector_id}
+                                            onChange={(e) => setData('sector_id', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        >
+                                            <option value="" disabled>Select Sector</option>
+                                            {sectors.map(sector => (
+                                                <option key={sector.id} value={sector.id}>{sector.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors.sector && <p className="text-sm text-red-600">{errors.sector}</p>}
+                                    </div>
+
+                                    {/* Jurisdiction */}
+                                    <div>
+                                        <label htmlFor="jurisdiction" className="block text-sm font-medium text-gray-700">Jurisdiction</label>
+                                        <select
+                                            id="jurisdiction"
+                                            value={data.jurisdiction_id}
+                                            onChange={(e) => setData('jurisdiction_id', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        >
+                                            <option value="" disabled>Select Jurisdiction</option>
+                                            {jurisdictions.map(jurisdiction => (
+                                                <option key={jurisdiction.id} value={jurisdiction.id}>{jurisdiction.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors.jurisdiction && <p className="text-sm text-red-600">{errors.jurisdiction}</p>}
+                                    </div>
+
+                                    {/* Opportunity Type */}
+                                    <div>
+                                        <label htmlFor="opportunitytype" className="block text-sm font-medium text-gray-700">Opportunity Type</label>
+                                        <select
+                                            id="opportunitytype"
+                                            value={data.opportunitytype_id}
+                                            onChange={(e) => setData('opportunitytype_id', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        >
+                                            <option value="" disabled>Select Opportunity</option>
+                                            {opportunityTypes.map(opportunitytype => (
+                                                <option key={opportunitytype.id} value={opportunitytype.id}>{opportunitytype.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors.opportunitytype && <p className="text-sm text-red-600">{errors.opportunitytype}</p>}
+                                    </div>
+                                </div>
+
+                                {/* Second Row: Activities, Allocation Methods, Utilities */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                                    {/* Activities */}
+                                    <div>
+                                        <label htmlFor="activity" className="block text-sm font-medium text-gray-700">Activities</label>
+                                        <select
+                                            id="activity"
+                                            value={data.activity_id}
+                                            onChange={(e) => setData('activity_id', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        >
+                                            <option value="" disabled>Select Activity</option>
+                                            {activities.map(activity => (
+                                                <option key={activity.id} value={activity.id}>{activity.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors.activity && <p className="text-sm text-red-600">{errors.activity}</p>}
+                                    </div>
+
+                                    {/* Allocation Methods */}
+                                    <div>
+                                        <label htmlFor="allocationmethod" className="block text-sm font-medium text-gray-700">Allocation Methods</label>
+                                        <select
+                                            id="allocationmethod"
+                                            value={data.allocationmethod_id}
+                                            onChange={(e) => setData('allocationmethod_id', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        >
+                                            <option value="" disabled>Select Allocation Method</option>
+                                            {allocationMethods.map(allocationmethod => (
+                                                <option key={allocationmethod.id} value={allocationmethod.id}>{allocationmethod.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors.allocationmethod && <p className="text-sm text-red-600">{errors.allocationmethod}</p>}
+                                    </div>
+
+                                    {/* Utilities */}
+                                    <div>
+                                        <label htmlFor="utility" className="block text-sm font-medium text-gray-700">Utilities</label>
+                                        <select
+                                            id="utility"
+                                            value={data.utility_id}
+                                            onChange={(e) => setData('utility_id', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        >
+                                            <option value="" disabled>Select Utility</option>
+                                            {utilities.map(utility => (
+                                                <option key={utility.id} value={utility.id}>{utility.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors.utility && <p className="text-sm text-red-600">{errors.utility}</p>}
+                                    </div>
+                                </div>
+
+                                {/* Project Description */}
+                                <div className="mb-6">
+                                    <label htmlFor="project_description" className="block text-sm font-medium text-gray-700">Project Description</label>
+                                    <textarea
+                                        id="project_description"
+                                        value={data.project_description}
+                                        onChange={(e) => setData('project_description', e.target.value)}
+                                        className="w-full border p-2 rounded text-sm resize-none"
+                                        rows="4"
+                                        required
+                                    />
+                                    {errors.project_description && <p className="text-sm text-red-600">{errors.project_description}</p>}
+                                </div>
+                            </section>                            
+
+                            {/* Title Deed Display */}
+                            <section className="border-b border-gray-200 pb-4">
+                                <h4 className="text-md font-semibold text-gray-700 mb-3">Title Deed</h4>
+                                {site.application_form ? (
+                                    <div className="mt-2">
+                                        <a
+                                            href={`/storage/${site.application_form}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-md font-semibold text-xs uppercase tracking-widest focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-50 transition ease-in-out duration-150"
+                                        >
+                                            <FontAwesomeIcon icon={faEye} className="mr-2" />
+                                            View Title Deed
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">No title deed available.</p>
+                                )}                                
+                            </section>   
+
+                            {data.sector_id && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                 
+                                    {/* Upload Title Deed */}
+                                    <div className="relative flex-1">                                        
+                                        <div className="mt-1 flex items-center">
+                                            <label htmlFor="applicationForm" className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <span>Upload</span>
+                                                <FontAwesomeIcon icon={faFileUpload} className="ml-2" />
+                                                <input
+                                                    id="applicationForm"
+                                                    name="applicationForm"
+                                                    type="file"
+                                                    className="sr-only"
+                                                    onChange={handleApplicationFormChange}
+                                                />
+                                            </label>
+                                            {data.applicationForm && (
+                                                <span className="ml-3 text-gray-500 text-sm">
+                                                    {data.applicationForm.name}
+                                                </span>
+                                            )}
+                                            {applicationFormError && <p className="text-sm text-red-600 mt-1">{applicationFormError}</p>}
+                                        </div>
+                                    </div>                                                               
+                                </div>
+                            )}                
+
+                            {/* Submit Button */}
+                            <div className="flex justify-end space-x-4 mt-6">
+                                <Link
+                                    href={route('landowner1.index')}  // Using the route for navigation
+                                    method="get"  // Optional, if you want to define the HTTP method (GET is default)
+                                    preserveState={true}  // Keep the page state (similar to `preserveState: true` in the button)
+                                    className="bg-gray-300 text-gray-700 rounded p-2 flex items-center space-x-2"
+                                >
+                                    <FontAwesomeIcon icon={faTimesCircle} />
+                                    <span>Cancel</span>
+                                </Link>
+                                <button
+                                    type="submit"                                   
+                                    disabled={processing || isSaving}
+                                    className="bg-blue-600 text-white rounded p-2 flex items-center space-x-2"
+                                >
+                                    <FontAwesomeIcon icon={faSave} />
+                                    <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleNext()} // Handle next action
+                                    disabled={processing || isNexting}
+                                    className="bg-blue-600 text-white rounded p-2 flex items-center space-x-2"
+                                >
+                                    <FontAwesomeIcon icon={faSave} />
+                                    <span>{isNexting ? 'Nexting...' : 'Next'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {/* New Landowner Modal */}
+            <Modal
+                isOpen={newLandownerModalOpen}
+                onClose={handleNewLandownerModalClose}
+                onConfirm={handleNewLandownerModalConfirm}
+                title="Create New Landowner"
+                confirmButtonText={newLandownerModalLoading ? 'Loading...' : (newLandownerModalSuccess ? "Success" : 'Confirm')}
+                confirmButtonDisabled={newLandownerModalLoading || newLandownerModalSuccess}
+            >
+                <form className="space-y-4">
+                    <div>
+                        <label htmlFor="owner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
+                        <select
+                            id="owner_type"
+                            value={newLandowner.owner_type}
+                            onChange={(e) => {
+                                const { id, value } = e.target;
+                                setNewLandowner(prevState => ({
+                                    ...prevState,
+                                    [id]: value,
+                                }));
+                            }}
+                            className="w-full border p-2 rounded text-sm"
+                            disabled={newLandownerModalLoading || newLandownerModalSuccess}
+                        >
+                            <option value="individual">Individual</option>
+                            <option value="company">Company</option>
+                        </select>
+                    </div>
+
+                    {newLandowner.owner_type === 'individual' && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">First Name</label>
+                                <input
+                                    type="text"
+                                    id="first_name"
+                                    value={newLandowner.first_name}
+                                    onChange={(e) => {
+                                        const { id, value } = e.target;
+                                        setNewLandowner(prevState => ({
+                                            ...prevState,
+                                            [id]: value,
+                                        }));
+                                    }}
+                                    className="w-full border p-2 rounded text-sm"
+                                    disabled={newLandownerModalLoading || newLandownerModalSuccess}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="other_names" className="block text-sm font-medium text-gray-700">Other Names</label>
+                                <input
+                                    type="text"
+                                    id="other_names"
+                                    value={newLandowner.other_names}
+                                    onChange={(e) => {
+                                        const { id, value } = e.target;
+                                        setNewLandowner(prevState => ({
+                                            ...prevState,
+                                            [id]: value,
+                                        }));
+                                    }}
+                                    className="w-full border p-2 rounded text-sm"
+                                    disabled={newLandownerModalLoading || newLandownerModalSuccess}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="surname" className="block text-sm font-medium text-gray-700">Surname</label>
+                                <input
+                                    type="text"
+                                    id="surname"
+                                    value={newLandowner.surname}
+                                    onChange={(e) => {
+                                        const { id, value } = e.target;
+                                        setNewLandowner(prevState => ({
+                                            ...prevState,
+                                            [id]: value,
+                                        }));
+                                    }}
+                                    className="w-full border p-2 rounded text-sm"
+                                    disabled={newLandownerModalLoading || newLandownerModalSuccess}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {newLandowner.owner_type === 'company' && (
+                        <div>
+                            <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">Company Name</label>
+                            <input
+                                type="text"
+                                id="company_name"
+                                value={newLandowner.company_name}
+                                onChange={(e) => {
+                                    const { id, value } = e.target;
+                                    setNewLandowner(prevState => ({
+                                        ...prevState,
+                                        [id]: value,
+                                    }));
+                                }}
+                                className="w-full border p-2 rounded text-sm"
+                                disabled={newLandownerModalLoading || newLandownerModalSuccess}
+                            />
+                        </div>
+                    )}
+
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={newLandowner.email}
+                            onChange={(e) => {
+                                const { id, value } = e.target;
+                                setNewLandowner(prevState => ({
+                                    ...prevState,
+                                    [id]: value,
+                                }));
+                            }}
+                            className="w-full border p-2 rounded text-sm"
+                            disabled={newLandownerModalLoading || newLandownerModalSuccess}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                        <input
+                            type="text"
+                            id="phone"
+                            value={newLandowner.phone}
+                            onChange={(e) => {
+                                const { id, value } = e.target;
+                                setNewLandowner(prevState => ({
+                                    ...prevState,
+                                    [id]: value,
+                                }));
+                            }}
+                            className="w-full border p-2 rounded text-sm"
+                            disabled={newLandownerModalLoading || newLandownerModalSuccess}
+                        />
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                isOpen={modalState.isOpen}
+                onClose={() => setModalState({ isOpen: false, message: '', isAlert: false, itemToRemoveIndex: null })}
+                onConfirm={() => setModalState({ isOpen: false, message: '', isAlert: false, itemToRemoveIndex: null })}
+                title={modalState.isAlert ? "Alert" : "Confirm Action"}
+                message={modalState.message}
+                isAlert={modalState.isAlert}
+            />
+        </AuthenticatedLayout>
+    );
+}

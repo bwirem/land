@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('site_coordinates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('site_id')->constrained('sites')->onDelete('cascade');
-            $table->decimal('latitude', 12, 10);
-            $table->decimal('longitude', 12, 10); // Increased precision for coordinates        
+            $table->decimal('latitude', 18, 15)->nullable(); // Increased precision
+            $table->decimal('longitude', 18, 15)->nullable(); // Increased precision  
             $table->timestamps();
         });
     }

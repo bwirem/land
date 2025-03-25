@@ -21,7 +21,7 @@ export default function Edit({ facilitybranch, facilityoptions }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsSaving(true);
-        put(route('systemconfiguration5.facilitybranches.update', facilitybranch.id), {
+        put(route('systemconfiguration2.facilitybranches.update', facilitybranch.id), {
             onSuccess: () => {
                 setIsSaving(false);
                 reset();
@@ -76,7 +76,7 @@ export default function Edit({ facilitybranch, facilityoptions }) {
                             {/* Buttons */}
                             <div className="flex justify-end space-x-4 mt-6">                                
                                 <Link
-                                    href={route('systemconfiguration5.facilitybranches.index')}  // Using the route for navigation
+                                    href={route('systemconfiguration2.facilitybranches.index')}  // Using the route for navigation
                                     method="get"  // Optional, if you want to define the HTTP method (GET is default)
                                     preserveState={true}  // Keep the page state (similar to `preserveState: true` in the button)
                                     className="bg-gray-300 text-gray-700 rounded p-2 flex items-center space-x-2"
