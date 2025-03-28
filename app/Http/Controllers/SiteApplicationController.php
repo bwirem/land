@@ -278,7 +278,6 @@ class SiteApplicationController extends Controller
      
      public function coordinating(Request $request, Site $site)
      {
-         // Validate request fields
          $validator = Validator::make($request->all(), [
              'stage' => 'required|integer',
              'coordinates' => 'nullable|array|min:1',
@@ -287,7 +286,7 @@ class SiteApplicationController extends Controller
              'coordinates.*.id' => [
                  'nullable',
                  Rule::exists('site_coordinates', 'id')->where('site_id', $site->id),
-             ], // Ensuring coordinates belong to the site
+             ],
          ]);
      
          if ($validator->fails()) {
@@ -298,29 +297,38 @@ class SiteApplicationController extends Controller
              // Update site details
              $site->update(['stage' => $request->input('stage')]);
      
-             // Handle coordinates
+             // Fetch existing coordinates for the site
+             $existingCoordinates = $site->siteCoordinates()->pluck('id')->toArray(); // ✅ Fix applied
+     
+             $newCoordinates = [];
+     
              if ($request->has('coordinates')) {
                  foreach ($request->input('coordinates') as $coordinate) {
-                     // Create or update the coordinate
-                     SiteCoordinate::updateOrCreate(
+                     $siteCoordinate = SiteCoordinate::updateOrCreate(
                          [
+                             'id' => $coordinate['id'] ?? null, // Match by ID if provided
                              'site_id' => $site->id,
-                             'latitude' => $coordinate['latitude'],
-                             'longitude' => $coordinate['longitude'],
                          ],
                          [
-                             // Add any additional fields if necessary
+                             'latitude' => $coordinate['latitude'],
+                             'longitude' => $coordinate['longitude'],
                          ]
                      );
+     
+                     // Collect updated or newly added coordinate IDs
+                     $newCoordinates[] = $siteCoordinate->id;
                  }
              }
      
-             // Existing investor handling logic...
+             // Delete removed coordinates (coordinates that existed but are not in the new request)
+             $coordinatesToDelete = array_diff($existingCoordinates, $newCoordinates);
+             SiteCoordinate::whereIn('id', $coordinatesToDelete)->delete();
          });
      
          return response()->json(['message' => 'Site coordinates updated successfully.']);
      }
      
+
 
     /**
      * Update the specified site in storage.
