@@ -20,14 +20,14 @@ const debounce = (func, delay) => {
 export default function Edit({auth, site, sectors,activities,allocationMethods,
     jurisdictions,opportunityTypes,utilities,facilityBranches }) {
     // Form state using Inertia's useForm hook
-    const { data, setData, put, errors, processing, reset } = useForm({
-        owner_type: site.owner_type || 'individual', // Default to 'individual' if undefined
-        first_name: site.first_name || '',
-        other_names: site.other_names || '',
-        surname: site.surname || '',
-        company_name: site.company_name || '',
-        email: site.email || '',
-        phone: site.phone || '',
+    const { data, setData, post, errors, processing, reset } = useForm({
+        landowner_type: site.landowner.landowner_type || 'individual', // Default to 'individual' if undefined
+        first_name: site.landowner.first_name || '',
+        other_names: site.landowner.other_names || '',
+        surname: site.landowner.surname || '',
+        company_name: site.landowner.company_name || '',
+        email: site.landowner.email || '',
+        phone: site.landowner.phone || '',
         
         landowner_id: site.landowner_id || null,
         sector_id: site.sector_id || '',
@@ -39,13 +39,15 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
         
         project_description: site.project_description || '',
         stage: site.stage || 1, // Default stage to 1 if not provided
-        applicationForm: null, // To store NEW file object (if any)
+        landarea: site.landarea || '',
+        priceofland: site.priceofland || '',
+        applicationForm: null, // To store NEW file object (if any)        
         facilitybranch_id: site.facilitybranch_id || null,
     });
     
 
     // Landowner Search State (Bring back relevant parts from Create.jsx)
-    const [landownerSearchQuery, setLandownerSearchQuery] = useState(site.owner_type === 'company' ? site.company_name : `${site.first_name} ${site.surname}`);
+    const [landownerSearchQuery, setLandownerSearchQuery] = useState(site.landowner.landowner_type === 'company' ? site.landowner.company_name : `${site.landowner.first_name} ${site.landowner.surname}`);
     const [landownerSearchResults, setLandownerSearchResults] = useState([]);
     const [showLandownerDropdown, setShowLandownerDropdown] = useState(false);
     const landownerDropdownRef = useRef(null);
@@ -55,7 +57,7 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
     // New Landowner Modal State (Bring back relevant parts from Create.jsx)
     const [newLandownerModalOpen, setNewLandownerModalOpen] = useState(false);
     const [newLandowner, setNewLandowner] = useState({
-        owner_type: 'individual',
+        landowner_type: 'individual',
         first_name: '',
         other_names: '',
         surname: '',
@@ -123,125 +125,23 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
         setIsSaving(true);
 
         const formData = new FormData();
-
-        // Explicitly append each field from the data object. Important for correct ordering.
-        formData.append('owner_type', data.owner_type || '');
-        formData.append('first_name', data.first_name || '');
-        formData.append('other_names', data.other_names || '');
-        formData.append('surname', data.surname || '');
-        formData.append('company_name', data.company_name || '');
-        formData.append('email', data.email || '');
-        formData.append('phone', data.phone || '');
-        formData.append('landowner_id', data.landowner_id || '');  //Important to treat as a string or number depending on your backend
-        
-        formData.append('sector_id', data.sector_id || '');
-        formData.append('activity_id', data.activity_id || '');
-        formData.append('allocationmethod_id', data.allocationmethod_id || '');
-        formData.append('jurisdiction_id', data.jurisdiction_id || '');
-        formData.append('opportunitytype_id', data.opportunitytype_id || '');
-        formData.append('utility_id', data.utility_id || '');
-        formData.append('project_description', data.project_description || '');
-        
-        formData.append('stage', data.stage || '');
-        formData.append('facilitybranch_id', data.facilitybranch_id || '');      
-
-        // Append the file if it exists.  Crucially, append even if it's `null` to signal no new file.
-        formData.append('applicationForm', data.applicationForm);
-
-        formData.append('_method', 'PUT'); // Method Spoofing
-
-        try {
-            const response = await axios.post(route('landowner1.update', site.id), formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            setIsSaving(false);
-            resetForm();
-
-             //Manually redirect since it is a success
-             window.location.href = route('landowner1.index');
-
-        } catch (error) {
-            setIsSaving(false);
-              console.error('Full error object:', error);  // Log the entire error for inspection
-
-            if (error.response && error.response.data) {
-                console.error('Error data:', error.response.data);
-                setData('errors', error.response.data.errors);
-            } else {
-                console.error("Error updating site:", error);
-                showAlert('An error occurred while saving the application.');
-            }
+        for (const key in data) {
+            formData.append(key, data[key]);
         }
-    };
 
-    const handleNext = async (e) => {
-        //e.preventDefault();
-        // Check if applicationForm is null
-        if (!data.applicationForm && !site.application_form) {
-            setApplicationFormError('Title Deed is required.');
-            return;
-        }
-        setApplicationFormError('');
-
-        setIsNexting(true);
-
-        const formData = new FormData();
-
-        // Explicitly append each field from the data object. Important for correct ordering.
-        formData.append('owner_type', data.owner_type || '');
-        formData.append('first_name', data.first_name || '');
-        formData.append('other_names', data.other_names || '');
-        formData.append('surname', data.surname || '');
-        formData.append('company_name', data.company_name || '');
-        formData.append('email', data.email || '');
-        formData.append('phone', data.phone || '');
-        formData.append('landowner_id', data.landowner_id || '');  
-            
-        formData.append('sector_id', data.sector_id || '');
-        formData.append('activity_id', data.activity_id || '');
-        formData.append('allocationmethod_id', data.allocationmethod_id || '');
-        formData.append('jurisdiction_id', data.jurisdiction_id || '');
-        formData.append('opportunitytype_id', data.opportunitytype_id || '');
-        formData.append('utility_id', data.utility_id || '');
-        formData.append('project_description', data.project_description || '');
-
-        formData.append('stage',2);
-        formData.append('facilitybranch_id', data.facilitybranch_id || '');
-
-        // Append the file if it exists.  Crucially, append even if it's `null` to signal no new file.
-        formData.append('applicationForm', data.applicationForm);
-
-        formData.append('_method', 'PUT'); // Method Spoofing
-
-        try {
-            const response = await axios.post(route('landowner1.update', site.id), formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            setIsNexting(false);
-            resetForm();
-
-             //Manually redirect since it is a success
-             window.location.href = route('landowner1.index');
-
-        } catch (error) {
-            setIsNexting(false);
-              console.error('Full error object:', error);  // Log the entire error for inspection
-
-            if (error.response && error.response.data) {
-                console.error('Error data:', error.response.data);
-                setData('errors', error.response.data.errors);
-            } else {
-                console.error("Error updating site:", error);
-                showAlert('An error occurred while saving the application.');
-            }
-        }
-    };
+        post(route('landowner1.update', site.id), formData, {
+            forceFormData: true, // Ensure Inertia uses FormData when files are present            
+            onSuccess: () => {
+                setIsSaving(false);
+                resetForm();
+            },
+            onError: (error) => {
+                console.error(error);
+                setIsSaving(false);
+                showAlert('An error occurred while saving the site details.');
+            },
+        });  
+    };    
 
     // Reset the form
     const resetForm = () => {
@@ -293,7 +193,7 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
     const selectLandowner = (selectedLandowner) => {
         setData((prevData) => ({
             ...prevData,
-            owner_type: selectedLandowner.owner_type,
+            landowner_type: selectedLandowner.landowner_type,
             first_name: selectedLandowner.first_name || '',
             other_names: selectedLandowner.other_names || '',
             surname: selectedLandowner.surname || '',
@@ -313,7 +213,7 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
         setNewLandownerModalOpen(true);
         setNewLandownerModalSuccess(false); //reset state in case open again
         setNewLandowner({
-            owner_type: 'individual',
+            landowner_type: 'individual',
             first_name: '',
             other_names: '',
             surname: '',
@@ -338,7 +238,7 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
             if (response.data && response.data.id) {
                 setData((prevData) => ({
                     ...prevData,
-                    owner_type: response.data.owner_type,
+                    landowner_type: response.data.landowner_type,
                     first_name: response.data.first_name,
                     other_names: response.data.other_names,
                     surname: response.data.surname,
@@ -460,7 +360,7 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
                                                         className="p-2 hover:bg-gray-100 cursor-pointer"
                                                         onClick={() => selectLandowner(landowner)}
                                                     >
-                                                        {landowner.owner_type === 'company' ? landowner.company_name : `${landowner.first_name} ${landowner.surname}`}
+                                                        {landowner.landowner_type === 'company' ? landowner.company_name : `${landowner.first_name} ${landowner.surname}`}
                                                     </li>
                                                 ))
                                             ) : (
@@ -476,10 +376,10 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700">Landowner Type:</label>
-                                                    <p className="mt-1 text-sm text-gray-500">{data.owner_type}</p>
+                                                    <p className="mt-1 text-sm text-gray-500">{data.landowner_type}</p>
                                                 </div>
 
-                                                {data.owner_type === 'individual' ? (
+                                                {data.landowner_type === 'individual' ? (
                                                     <>
                                                         <div>
                                                             <label className="block text-sm font-medium text-gray-700">First Name:</label>
@@ -659,6 +559,37 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
                                     </div>
                                 </div>
 
+                                {/* Second Row: landarea, priceofland */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+
+                                    <div>
+                                        <label htmlFor="landarea" className="block text-sm font-medium text-gray-700">Land Area</label>
+                                        <input
+                                            type="number"
+                                            id="landarea"
+                                            value={data.landarea}
+                                            onChange={(e) => setData('landarea', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        />
+                                        {errors.landarea && <p className="text-sm text-red-600">{errors.landarea}</p>}
+                                    </div> 
+
+                                    <div>
+                                        <label htmlFor="priceofland" className="block text-sm font-medium text-gray-700">Price of Land</label>
+                                        <input
+                                            type="number"
+                                            id="priceofland"
+                                            value={data.priceofland}
+                                            onChange={(e) => setData('priceofland', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        />
+                                        {errors.priceofland && <p className="text-sm text-red-600">{errors.priceofland}</p>}
+                                    </div> 
+
+                                </div>        
+
                                 {/* Project Description */}
                                 <div className="mb-6">
                                     <label htmlFor="project_description" className="block text-sm font-medium text-gray-700">Project Description</label>
@@ -738,18 +669,9 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
                                     className="bg-blue-600 text-white rounded p-2 flex items-center space-x-2"
                                 >
                                     <FontAwesomeIcon icon={faSave} />
-                                    <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                                    <span>{isSaving ? 'Saving...' : 'Next'}</span>
                                 </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleNext()} // Handle next action
-                                    disabled={processing || isNexting}
-                                    className="bg-blue-600 text-white rounded p-2 flex items-center space-x-2"
-                                >
-                                    <FontAwesomeIcon icon={faSave} />
-                                    <span>{isNexting ? 'Nexting...' : 'Next'}</span>
-                                </button>
+                                
                             </div>
                         </form>
                     </div>
@@ -767,10 +689,10 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
             >
                 <form className="space-y-4">
                     <div>
-                        <label htmlFor="owner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
+                        <label htmlFor="landowner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
                         <select
-                            id="owner_type"
-                            value={newLandowner.owner_type}
+                            id="landowner_type"
+                            value={newLandowner.landowner_type}
                             onChange={(e) => {
                                 const { id, value } = e.target;
                                 setNewLandowner(prevState => ({
@@ -786,7 +708,7 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
                         </select>
                     </div>
 
-                    {newLandowner.owner_type === 'individual' && (
+                    {newLandowner.landowner_type === 'individual' && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">First Name</label>
@@ -842,7 +764,7 @@ export default function Edit({auth, site, sectors,activities,allocationMethods,
                         </div>
                     )}
 
-                    {newLandowner.owner_type === 'company' && (
+                    {newLandowner.landowner_type === 'company' && (
                         <div>
                             <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">Company Name</label>
                             <input

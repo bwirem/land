@@ -20,7 +20,7 @@ function convertUTMToLatLong(northing, easting) {
     return { latitude, longitude };
 }
 
-export default function Coordinating({ site,site_coordinates,sectors, jurisdictions, opportunityTypes, activities, 
+export default function Submission({ site,site_coordinates,sectors, jurisdictions, opportunityTypes, activities, 
     allocationMethods, utilities, facilityBranches }) {
 
     // Form state using Inertia's useForm hook
@@ -43,10 +43,10 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
         project_description: site.project_description || '',
         facilitybranch_id: site.facilitybranch_id || "",
         stage: site.stage,
-        landarea: site.landarea || '',
-        priceofland: site.priceofland || '',
         coordinate_type: '', // Set the default value to an empty string
-        coordinates: site_coordinates || [],
+        coordinates: site_coordinates || [],       
+
+        approvals: site.approvals || [],  // Array of approvals details
     });
     
 
@@ -66,7 +66,13 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
 
     // Saving state
     const [isSaving, setIsSaving] = useState(false); 
-    
+    const [submitModalOpen, setSubmitModalOpen] = useState(false); 
+    const [submitRemarks, setSubmitRemarks] = useState(''); // State for the remarks
+    const [remarksError, setRemarksError] = useState(''); // State to display remarks error
+
+    const [submitModalLoading, setSubmitModalLoading] = useState(false);
+    const [submitModalSuccess, setSubmitModalSuccess] = useState(false);
+
     const showAlert = (message) => {
         setModalState({
             isOpen: true,
@@ -137,70 +143,75 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
         setModalState({ isOpen: false, message: '', isAlert: false, itemToRemoveIndex: null });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
+   
+    const handleSubmitClick = () => {
         if (data.coordinates.length === 0) {
             showAlert('Please add at least one coordinate before submitting.');
             return;
         }
-
-        setIsSaving(true);
     
-        const formData = new FormData();
-        for (const key in data) {
-            formData.append(key, data[key]);
-        }
+        setSubmitModalOpen(true);
+        setSubmitRemarks('');
+        setRemarksError('');
 
-        // Append Coordinates
-        data.coordinates.forEach((coordinate, index) => {
-            formData.append(`coordinates[${index}][latitude]`, coordinate.latitude);
-            formData.append(`coordinates[${index}][longitude]`, coordinate.longitude);
-        });
-    
-       
-        put(route('landowner1.coordinating', site.id), formData, {
-            forceFormData: true, // Ensure Inertia uses FormData when files are present            
-            onSuccess: () => {
-                setIsSaving(false);
-                resetForm();
-            },
-            onError: (error) => {
-                console.error(error);
-                setIsSaving(false);
-                showAlert('An error occurred while saving the site details.');
-            },
-        });  
-    };    
+        setSubmitModalLoading(false); // Reset loading state
+        setSubmitModalSuccess(false); // Reset success state
 
-    // Reset the form
-    const resetForm = () => {
-        reset('', {
-            onSuccess: () => {
-                Inertia.reload({ 
-                    only: ['site.site_guarantors'],
-                    preserveScroll: true
-                });
-            }
-        });
     };
 
-   
+    const handleSubmitModalClose = () => {
+        setSubmitModalOpen(false);      
+        setSubmitRemarks(''); // Clear remarks when closing modal
+        setRemarksError(''); // Clear any error
+
+        setSubmitModalLoading(false); // Reset loading state
+        setSubmitModalSuccess(false); // Reset success state
+    };
+
+    const handleSubmitModalConfirm = () => {      
+
+        if (!data.remarks) {
+            setRemarksError('Please enter Submit remarks.');
+            return;
+        }
+ 
+        
+        const formData = new FormData();
+        formData.append('remarks', data.remarks);
+ 
+         setSubmitModalLoading(true); // Set loading state
+ 
+         put(route('management0.approve', site.id), formData, {
+             forceFormData: true,
+             onSuccess: () => {
+                 setSubmitModalLoading(false);
+                 reset(); // Reset form data
+                 setSubmitModalSuccess(true); // Set success state
+                 handleSubmitModalClose(); // Close the modal on success
+             },
+             onError: (errors) => {
+                 setSubmitModalLoading(false);
+                 console.error('Submission errors:', errors);
+             },
+         });      
+
+    };
+
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Coordinating</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Review</h2>}
         >
-            <Head title="Coordinating" />
+            <Head title="Review" />
             <div className="py-12">
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="bg-white p-6 shadow sm:rounded-lg">
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form className="space-y-6">
                             {/* Landowner Details Section */}
                             <section className="border-b border-gray-200 pb-4">
                                 <h4 className="text-md font-semibold text-gray-700 mb-3">Land Owner Information</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Landowner Type:</label>
+                                        <label className="block text-sm font-medium text-gray-700">Land Owner Type:</label>
                                         <p className="mt-1 text-sm text-gray-500">{data.landowner_type}</p>
                                     </div>
 
@@ -294,17 +305,7 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
                                         <p className="mt-1 text-sm text-gray-500">
                                             {utilities.find(utility => utility.id === site.utility_id)?.name || 'N/A'}
                                         </p>
-                                    </div>  
-
-                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Land Area:</label>
-                                        <p className="mt-1 text-sm text-gray-500">{data.landarea}</p>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Price of Land:</label>
-                                        <p className="mt-1 text-sm text-gray-500">{data.priceofland}</p>
-                                    </div>                                 
+                                    </div>                                    
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                                     <div>
@@ -336,102 +337,7 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
 
                             {/* Site Coordinates Section */}                          
                             <section className="border-b border-gray-200 pb-4">
-                                <h4 className="text-md font-semibold text-gray-700 mb-3">Site Coordinates</h4>
-                                <div className="flex items-center space-x-4 mb-2 py-1">
-                                    <div className="relative flex-1">
-                                        <select
-                                            id="coordinate_type"
-                                            value={data.coordinate_type}
-                                            onChange={(e) => setData('coordinate_type', e.target.value)}
-                                            className={`mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.coordinate_type ? 'border-red-500' : ''}`}
-                                            required
-                                        >
-                                            <option value="" disabled>Select Coordinate Systems</option> {/* Default option */}
-                                            <option value="1">Geographic Coordinate System (GCS)</option>
-                                            <option value="2">Projected Coordinate System (PCS)</option>
-                                        </select>
-                                        {errors.coordinate_type && <p className="text-sm text-red-600 mt-1">{errors.coordinate_type}</p>}
-                                    </div>
-                                </div>
-
-                                {/* Conditional Input Fields */}
-                                {data.coordinate_type === '1' && ( // For GCS
-                                    <>
-                                        <div className="grid grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Latitude:</label>
-                                                <input
-                                                    type="text"
-                                                    value={newLatitude}
-                                                    onChange={(e) => setNewLatitude(e.target.value)}
-                                                    className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="Enter Latitude"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Longitude:</label>
-                                                <input
-                                                    type="text"
-                                                    value={newLongitude}
-                                                    onChange={(e) => setNewLongitude(e.target.value)}
-                                                    className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="Enter Longitude"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Add Coordinate Button for GCS */}
-                                        <div className="flex justify-end mb-4">
-                                            <button
-                                                type="button"
-                                                onClick={handlAddCoordinateClick}
-                                                className="bg-green-500 text-white rounded p-2 flex items-center space-x-2"
-                                            >
-                                                <FontAwesomeIcon icon={faPlus} />
-                                                <span>Add Coordinate</span>
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-
-                                {data.coordinate_type === '2' && ( // For PCS
-                                    <>
-                                        <div className="grid grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Northing:</label>
-                                                <input
-                                                    type="text"
-                                                    value={northing}
-                                                    onChange={(e) => setNorthing(e.target.value)}
-                                                    className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="Enter Northing"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Easting:</label>
-                                                <input
-                                                    type="text"
-                                                    value={easting}
-                                                    onChange={(e) => setEasting(e.target.value)}
-                                                    className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="Enter Easting"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Convert Button for PCS */}
-                                        <div className="flex justify-end mb-4">
-                                            <button
-                                                type="button"
-                                                onClick={handleConvertClick}
-                                                className="bg-blue-500 text-white rounded p-2 flex items-center space-x-2"
-                                            >
-                                                <FontAwesomeIcon icon={faPlus} />
-                                                <span>Convert Northing/Easting</span>
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
+                                <h4 className="text-md font-semibold text-gray-700 mb-3">Site Coordinates</h4>                               
 
                                 {/* Coordinates Table */}
                                 <div className="overflow-x-auto bg-white border border-gray-300 rounded-lg">
@@ -443,10 +349,7 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Longitude
-                                                </th>                                            
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Actions
-                                                </th>
+                                                </th>  
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200">
@@ -457,27 +360,71 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         {coordinateData.longitude}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeCoordinate(index)}
-                                                            className="ml-2 text-red-600 hover:text-red-800"
-                                                        >
-                                                            <FontAwesomeIcon icon={faTrash} />
-                                                        </button>
-                                                    </td>
+                                                    </td>                                                    
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 </div> 
-                            </section>                           
+                            </section>   
+
+                              <section>
+                                <h4 className="text-md font-semibold text-gray-700 mb-3">Declaration Remarks</h4>
+                                <div>                                    
+                                    <p className="mt-1 text-sm text-gray-500">{site.submit_remarks}</p>
+                                </div>
+                            </section>    
+
+
+                            {/* Stage Selection */}
+                            <section>
+                                <h4 className="text-md font-semibold text-gray-700 mb-3">Review Details</h4>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th> 
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>  
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>                                         
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200">
+                                        {data.approvals
+                                            .filter(approval => approval.remarks && approval.remarks.trim() !== '') // Filter out approvals with null or empty remarks
+                                            .map((approval, index) => (
+                                                <tr key={index}>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {approval.remarks || 'N/A'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {approval.approver?.user_group?.name || 'N/A'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {approval.approver?.name || 'N/A'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {approval.updated_at ? new Intl.DateTimeFormat('en-US', {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: '2-digit',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                            second: '2-digit',
+                                                            hour12: true
+                                                        }).format(new Date(approval.updated_at)) : 'N/A'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>                       
 
                             {/* Submit Button */}
                             <div className="flex justify-end space-x-4 mt-6">
                                 <Link
-                                    href={route('landowner1.index')}  // Using the route for navigation
+                                    href={route('management0.index')}  // Using the route for navigation
                                     method="get"
                                     preserveState={true}
                                     className="bg-gray-300 text-gray-700 rounded p-2 flex items-center space-x-2"
@@ -487,21 +434,21 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
                                 </Link>
 
                                  <Link
-                                    href={route('landowner1.back', site.id)}
+                                    href={route('management0.back', site.id)}
                                     className="bg-blue-300 text-blue-700 rounded p-2 flex items-center space-x-2"
                                 >
                                     <FontAwesomeIcon icon={faArrowLeft} />
                                     <span>Return</span>
-                                </Link>  
+                                </Link> 
                                 
                                 <button
-                                    type="submit"
-                                    disabled={processing || isSaving}
-                                    className="bg-blue-600 text-white rounded p-2 flex items-center space-x-2"
+                                    type="button"
+                                    onClick={handleSubmitClick}
+                                    className="bg-green-500 text-white rounded p-2 flex items-center space-x-2 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
                                 >
-                                    <FontAwesomeIcon icon={faSave} />
-                                    <span>{isSaving ? 'Saving...' : 'Next'}</span>
-                                </button>                                
+                                    <FontAwesomeIcon icon={faCheck} />
+                                    <span>Approve</span>
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -516,6 +463,41 @@ export default function Coordinating({ site,site_coordinates,sectors, jurisdicti
                 message={modalState.message}
                 isAlert={modalState.isAlert}
             />
+
+
+             {/* Submit Confirmation Modal */}
+             <Modal
+                    isOpen={submitModalOpen}
+                    onClose={handleSubmitModalClose}
+                    onConfirm={handleSubmitModalConfirm}
+                    title="Approval Confirmation"                  
+                    confirmButtonText={submitModalLoading ? 'Loading...' : (submitModalSuccess ? "Success" : 'Submit')}
+                    confirmButtonDisabled={submitModalLoading || submitModalSuccess}
+                >
+                    <div>
+                        <p>
+                            Are you sure you want to Submit <strong>
+                                {data.landowner_type === 'individual' ? (
+                                    `${data.first_name} ${data.other_names ? data.other_names + ' ' : ''}${data.surname}`
+                                ) : (
+                                    data.company_name
+                                )}
+                            </strong>?
+                        </p>
+
+                        <label htmlFor="Submit_remarks" className="block text-sm font-medium text-gray-700 mt-4">
+                            Approval Remarks:
+                        </label>
+                        <textarea
+                            id="Submit_remarks"
+                            rows="3"
+                            className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            value={data.remarks}
+                            onChange={(e) => setData('remarks', e.target.value)}
+                        />
+                        {remarksError && <p className="text-red-500 text-sm mt-1">{remarksError}</p>}
+                    </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }

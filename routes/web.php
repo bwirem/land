@@ -5,6 +5,10 @@ use App\Http\Controllers\ProfileController;
 
 use App\Http\Controllers\SiteApplicationController;
 use App\Http\Controllers\SiteApprovalController;
+use App\Http\Controllers\SiteInterestController;
+use App\Http\Controllers\SiteInterestAwardController;
+use App\Http\Controllers\SiteHistoryController;
+
 
 use App\Http\Controllers\SiteActivityController;
 use App\Http\Controllers\SiteUtilityController;
@@ -67,8 +71,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [LandOwnerController::class, 'store'])->name('store'); 
         Route::post('/directstore', [LandOwnerController::class, 'directstore'])->name('directstore');
         Route::get('/{landowner}/edit', [LandOwnerController::class, 'edit'])->name('edit'); 
-        Route::put('/{landowner}', [LandOwnerController::class, 'update'])->name('update');
+        Route::post('/{landowner}', [LandOwnerController::class, 'update'])->name('update');
+        Route::post('approve/{landowner}', [LandOwnerController::class, 'approve'])->name('approve'); 
+        Route::get('/{landowner}/back', [LandOwnerController::class, 'back'])->name('back');
         Route::get('/search', [LandOwnerController::class, 'search'])->name('search'); 
+
+        
     });   
 
     // Order routes
@@ -77,31 +85,41 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', [SiteApplicationController::class, 'create'])->name('create');
         Route::post('/', [SiteApplicationController::class, 'store'])->name('store');
         Route::get('/{site}/edit', [SiteApplicationController::class, 'edit'])->name('edit');
-        Route::put('/{site}', [SiteApplicationController::class, 'update'])->name('update');
+        Route::post('/{site}', [SiteApplicationController::class, 'update'])->name('update');
+        Route::get('/{site}/back', [SiteApplicationController::class, 'back'])->name('back');
         
-        Route::put('coordinating/{site}', [SiteApplicationController::class, 'coordinating'])->name('coordinating');
-        Route::put('documentation/{site}', [SiteApplicationController::class, 'documentation'])->name('documentation');
-        Route::post('submit/{site}', [SiteApplicationController::class, 'submit'])->name('submit');
+        Route::put('coordinating/{site}', [SiteApplicationController::class, 'coordinating'])->name('coordinating');      
+        Route::put('submit/{site}', [SiteApplicationController::class, 'submit'])->name('submit');
+       
         Route::get('customerSites/{customerId}', [SiteApplicationController::class, 'customerSites'])->name('customerSites'); 
        
     });
 
-    //  // Land  routes
-    //  Route::prefix('management0')->name('management0.')->group(function () {
-    //     Route::get('/', [SiteApprovalController::class, 'index'])->name('index');        
-    //     Route::get('/{site}/edit', [SiteApprovalController::class, 'edit'])->name('edit');
-    //     Route::put('/{site}', [SiteApprovalController::class, 'update'])->name('update'); 
-    //     Route::post('approve/{site}', [SiteApprovalController::class, 'approve'])->name('approve'); 
-    // });
+     // Land  routes
+     Route::prefix('management0')->name('management0.')->group(function () {
+        Route::get('/', [SiteApprovalController::class, 'index'])->name('index');        
+        Route::get('/{site}/edit', [SiteApprovalController::class, 'edit'])->name('edit');      
+        Route::put('approve/{site}', [SiteApprovalController::class, 'approve'])->name('approve'); 
+        Route::get('/{site}/back', [SiteApprovalController::class, 'back'])->name('back');
+    });
 
 
-    // // Post Bills routes
-    // Route::prefix('management1')->name('management1.')->group(function () {
-    //     Route::get('/', [SiteApprovalController::class, 'index'])->name('index');        
-    //     Route::get('/{site}/edit', [SiteApprovalController::class, 'edit'])->name('edit');
-    //     Route::put('/{site}', [SiteApprovalController::class, 'update'])->name('update'); 
-    //     Route::post('approve/{site}', [SiteApprovalController::class, 'approve'])->name('approve'); 
-    // });
+    // // --- investors Routes ---
+    Route::prefix('management1')->name('management1.')->group(function () {
+        Route::get('/', [SiteInterestAwardController::class, 'index'])->name('index');       
+        Route::post('/', [SiteInterestAwardController::class, 'store'])->name('store');        
+        Route::get('/{investor}/edit', [SiteInterestAwardController::class, 'edit'])->name('edit'); 
+        Route::put('/{investor}', [SiteInterestAwardController::class, 'update'])->name('update');      
+    });
+
+    // // --- investors Routes ---
+    Route::prefix('management2')->name('management2.')->group(function () {
+        Route::get('/', [SiteHistoryController::class, 'index'])->name('index');       
+        Route::post('/', [SiteHistoryController::class, 'store'])->name('store');        
+        Route::get('/{site}/edit', [SiteHistoryController::class, 'edit'])->name('edit'); 
+        Route::put('/{site}', [SiteHistoryController::class, 'update'])->name('update');
+        Route::get('/{site}/back', [SiteHistoryController::class, 'back'])->name('back');    
+    });
 
 
      // --- investors Routes ---
@@ -117,13 +135,10 @@ Route::middleware('auth')->group(function () {
 
     // // --- investors Routes ---
      Route::prefix('investor1')->name('investor1.')->group(function () {
-        Route::get('/', [InvestorController::class, 'index'])->name('index'); 
-        Route::get('/create', [InvestorController::class, 'create'])->name('create'); 
-        Route::post('/', [InvestorController::class, 'store'])->name('store'); 
-        Route::post('/directstore', [InvestorController::class, 'directstore'])->name('directstore');
-        Route::get('/{investor}/edit', [InvestorController::class, 'edit'])->name('edit'); 
-        Route::put('/{investor}', [InvestorController::class, 'update'])->name('update');
-        Route::get('/search', [InvestorController::class, 'search'])->name('search'); 
+        Route::get('/', [SiteInterestController::class, 'index'])->name('index');       
+        Route::post('/', [SiteInterestController::class, 'store'])->name('store');        
+        Route::get('/{investor}/edit', [SiteInterestController::class, 'edit'])->name('edit'); 
+        Route::put('/{investor}', [SiteInterestController::class, 'update'])->name('update');      
     });
 
     

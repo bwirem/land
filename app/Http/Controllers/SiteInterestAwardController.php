@@ -26,45 +26,31 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 
-class SiteApprovalController extends Controller
+class SiteInterestAwardController extends Controller
 {
     /**
      * Display a listing of sites.
      */
     public function index(Request $request)
     {
-        $query = Site::with(['landowner', 'sector', 'user']);
+        $query = SiteInvestor::with(['site', 'investor']);
 
         // Search functionality (search customer's name, company name)
         if ($request->filled('search')) {
-            $query->whereHas('landowner', function ($q) use ($request) {
+            $query->whereHas('investor', function ($q) use ($request) {
                 $q->where('first_name', 'like', '%' . $request->search . '%')
                 ->orWhere('other_names', 'like', '%' . $request->search . '%')
                 ->orWhere('surname', 'like', '%' . $request->search . '%')
                 ->orWhere('company_name', 'like', '%' . $request->search . '%');
             });
         }
-
-        $query->whereBetween('stage', [4, 6]);       
-
-        // Filtering by stage
-        if ($request->filled('stage')) {
-            $stages = explode(',', $request->stage);  // Split the string into an array
-
-            if (count($stages) > 1) { // Check if we need to use whereIn (multiple stages)
-                $query->whereIn('stage', $stages);
-            } else {
-                $query->where('stage', $stages[0]); // Single stage
-            }
-
-        }
-
+       
         // Only show stages less than or equal to 3
         $sites = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        return inertia('SiteApproval/Index', [
+        return inertia('SiteInterestAward/Index', [
             'sites' => $sites,           
-            'filters' => $request->only(['search', 'stage']),
+            'filters' => $request->only(['search']),
         ]);
     }
    

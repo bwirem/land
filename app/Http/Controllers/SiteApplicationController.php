@@ -36,13 +36,13 @@ class SiteApplicationController extends Controller
     {
         $query = Site::with(['landowner', 'sector', 'user']);
 
-        // Search functionality (search customer's name, company name)
+        /// Search functionality (search customer's name, company name)
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
+            $query->whereHas('landowner', function ($q) use ($request) {
                 $q->where('first_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('other_names', 'like', '%' . $request->search . '%')
-                    ->orWhere('surname', 'like', '%' . $request->search . '%')
-                    ->orWhere('company_name', 'like', '%' . $request->search . '%');
+                ->orWhere('other_names', 'like', '%' . $request->search . '%')
+                ->orWhere('surname', 'like', '%' . $request->search . '%')
+                ->orWhere('company_name', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -86,7 +86,7 @@ class SiteApplicationController extends Controller
      {
          // Validate input
          $validated = $request->validate([
-             'owner_type' => 'required|in:individual,company',
+             'landowner_type' => 'required|in:individual,company',
              'first_name' => 'nullable|string|max:255',
              'other_names' => 'nullable|string|max:255',
              'surname' => 'nullable|string|max:255',
@@ -104,12 +104,16 @@ class SiteApplicationController extends Controller
      
              'project_description' => 'nullable|string',
              'stage' => 'required|integer',
+
+             'landarea' => 'required|numeric',
+             'priceofland' => 'required|numeric',
+
              'applicationForm' => 'nullable|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
              'facilitybranch_id' => 'required|integer',
          ]);
      
-         // Adjust validation based on `owner_type`
-         if ($validated['owner_type'] === 'individual') {
+         // Adjust validation based on `landowner_type`
+         if ($validated['landowner_type'] === 'individual') {
              $validated = array_merge($validated, Validator::validate($validated, [
                  'first_name' => 'required|string|max:255',
                  'surname' => 'required|string|max:255',
@@ -136,9 +140,9 @@ class SiteApplicationController extends Controller
          $validated['user_id'] = Auth::id();
      
          // Create the site
-         Site::create($validated);
+         $site = Site::create($validated);         
      
-         return redirect()->route('landowner1.index')->with('success', 'Site application created successfully.');
+         return redirect()->route('landowner1.edit', ['site' =>$site->id])->with('success', 'Site application created successfully.');
      }     
 
     /**
@@ -146,7 +150,9 @@ class SiteApplicationController extends Controller
      */
     
      public function edit(Site $site)
-     {    
+     {  
+         $site->load('landowner');
+
          // Common data to be passed to the view
          $commonData = [
              'sectors' => SiteSector::all(),
@@ -170,25 +176,16 @@ class SiteApplicationController extends Controller
                  'site_coordinates' => $site->siteCoordinates,
                  ...$commonData,
              ]);
-         } else {
-             $site->load('siteInvestors.investor');
-     
-             $site->siteInvestors->transform(function ($siteInvestor) {
-                 return [
-                     'collateral_doc' => $siteInvestor->collateral_doc,
-                     'collateralDocName' => $siteInvestor->collateral_docname,
-                     'first_name' => optional($siteInvestor->investor)->first_name,
-                     'surname' => optional($siteInvestor->investor)->surname,
-                     'company_name' => optional($siteInvestor->investor)->company_name,
-                     'investor_type' => optional($siteInvestor->investor)->investor_type,
-                     'investor_id' => optional($siteInvestor->investor)->id,
-                 ];
-             });
-     
-             return inertia('SiteApplication/Documentation', [
+
+         } else { 
+
+            $site->load('siteCoordinates');   
+             return inertia('SiteApplication/Submission', [
                  'site' => $site,
+                 'site_coordinates' => $site->siteCoordinates,
                  ...$commonData,
              ]);
+
          }
      }
      
@@ -200,7 +197,7 @@ class SiteApplicationController extends Controller
      public function update(Request $request, Site $site)
      {
          $rules = [
-             'owner_type' => 'required|in:individual,company',
+             'landowner_type' => 'required|in:individual,company',
              'first_name' => 'nullable|string|max:255',
              'other_names' => 'nullable|string|max:255',
              'surname' => 'nullable|string|max:255',
@@ -216,6 +213,8 @@ class SiteApplicationController extends Controller
              'utility_id' => 'nullable|exists:site_utilities,id',
              'project_description' => 'nullable|string',
              'stage' => 'required|integer',
+             'landarea' => 'required|numeric',
+             'priceofland' => 'required|numeric',
              'facilitybranch_id' => 'required|integer',             
          ];
      
@@ -231,8 +230,8 @@ class SiteApplicationController extends Controller
          // Validate input
          $validated = $request->validate($rules);
      
-         // Adjust validation based on `owner_type`
-         if ($validated['owner_type'] === 'individual') {
+         // Adjust validation based on `landowner_type`
+         if ($validated['landowner_type'] === 'individual') {
              $validated = array_merge($validated, Validator::validate($validated, [
                  'first_name' => 'required|string|max:255',
                  'surname' => 'required|string|max:255',
@@ -265,9 +264,14 @@ class SiteApplicationController extends Controller
          $validated['user_id'] = Auth::id();
      
          // Update the site
-         $site->update($validated);
+         
+         $site->update(array_merge(
+            $validated,
+            ['stage' => min($site->stage + 1, 2)]
+        ));
+        
      
-         return redirect()->route('landowner1.index')->with('success', 'Site application updated successfully.');
+         return redirect()->route('landowner1.edit', ['site' =>$site->id])->with('success', 'Site application created successfully.');
      }
 
      
@@ -324,8 +328,14 @@ class SiteApplicationController extends Controller
              $coordinatesToDelete = array_diff($existingCoordinates, $newCoordinates);
              SiteCoordinate::whereIn('id', $coordinatesToDelete)->delete();
          });
+
+
+         $site->update(array_merge(           
+            ['stage' => min($site->stage + 1, 3)]
+        ));
+        
      
-         return response()->json(['message' => 'Site coordinates updated successfully.']);
+         return redirect()->route('landowner1.edit', ['site' =>$site->id])->with('success', 'Site coordinates updated successfully.');
      }
      
 
@@ -334,103 +344,12 @@ class SiteApplicationController extends Controller
      * Update the specified site in storage.
      */    
      
-     public function documentation(Request $request, Site $site)
-     {
-         // Validate request fields
-         $validator = Validator::make($request->all(), [
-             'stage' => 'required|integer',
-             'investors' => 'nullable|array|min:1',
-             'investors.*.id' => [
-                 'nullable',
-                 Rule::exists('site_investors', 'id')->where('site_id', $site->id),
-             ], // Ensuring investor belongs to the site
-             'investors.*.investor_id' => 'required_with:investors|exists:bls_investors,id',
-             'investors.*.collateral_doc' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
-         ]);
- 
-         if ($validator->fails()) {
-             return response()->json(['errors' => $validator->errors()], 422);
-         }
- 
-         DB::transaction(function () use ($request, $site) {
-             // Update site details
-             $site->update(['stage' => $request->input('stage')]);
- 
-             // Fetch existing and updating investors
-             $existingInvestors = $site->siteInvestors()->pluck('investor_id')->toArray();
-             $updatingInvestors = collect($request->input('investors'))->pluck('investor_id')->map(fn($id) => (int) $id)->toArray();
- 
-             // Identify investors to delete
-             $investorsToDelete = array_values(array_diff($existingInvestors, $updatingInvestors));
-             $investorData = [];
- 
-             // Process new/updated investors
-             if ($request->has('investors')) {
-                 foreach ($request->input('investors') as $index => $investor) {
-                     $investorId = $investor['investor_id'];
-                     $collateralDocPath = null;
-                     $collateralDocName = null;
- 
-                     if ($request->hasFile("investors.{$index}.collateral_doc")) {
-                         $file = $request->file("investors.{$index}.collateral_doc");
- 
-                         // Delete existing file if present
-                         $existingInvestor = SiteInvestor::where('site_id', $site->id)
-                             ->where('investor_id', $investorId)
-                             ->first();
- 
-                         if ($existingInvestor && $existingInvestor->collateral_doc) {
-                             $oldFilePath = storage_path('app/public/' . $existingInvestor->collateral_doc);
-                             if (file_exists($oldFilePath)) {
-                                 unlink($oldFilePath);
-                             }
-                         }
- 
-                         // Store new file
-                         $filename = uniqid() . '.' . $file->getClientOriginalExtension();
-                         $collateralDocPath = $file->storeAs('site_investor_collateral', $filename, 'public');
-                         $collateralDocName = $file->getClientOriginalName();
-                     }
- 
-                     // Set attributes for the relationship
-                     $attributes = ['user_id' => Auth::id()];
-                     if ($collateralDocPath) {
-                         $attributes['collateral_doc'] = $collateralDocPath;
-                         $attributes['collateral_docname'] = $collateralDocName;
-                     }
- 
-                     $investorData[$investorId] = $attributes;
-                 }
- 
-                 // Sync relationships
-                 $site->blsInvestors()->syncWithoutDetaching($investorData);
-             }
- 
-             // Delete unselected investors and their files
-             if (!empty($investorsToDelete)) {
-                 SiteInvestor::whereIn('investor_id', $investorsToDelete)
-                     ->where('site_id', $site->id)
-                     ->get()
-                     ->each(function ($investor) {
-                         if ($investor->collateral_doc) {
-                             $filePath = storage_path('app/public/' . $investor->collateral_doc);
-                             if (file_exists($filePath)) {
-                                 unlink($filePath);
-                             }
-                         }
-                         $investor->delete();
-                     });
-             }
-         });
- 
-         return response()->json(['message' => 'Site application updated successfully.']);
-     } 
-
+    
    
     public function submit(Request $request, Site $site)
     {
 
-        //Log::info('Start processing purchase update:', ['purchase' => $site, 'request_data' => $request->all()]);
+        //Log::info('Start processing purchase update:', ['site' => $site, 'request_data' => $request->all()]);
 
         // Validate request fields.
         $validator = Validator::make($request->all(), [
@@ -457,13 +376,33 @@ class SiteApplicationController extends Controller
                 ]);
             });
 
-            return response()->json(['message' => 'Site approved successfully.'], 200);
+            return redirect()->route('landowner1.index')->with('success', 'Site coordinates updated successfully.');
 
         } catch (\Exception $e) {
             Log::error('Error approving site: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to approve site. Please try again.'], 500);
         }
+
+
+        
     }
+
+
+    public function back(Site $site)
+    { 
+        // Check if the current stage is greater than 0
+        if ($site->stage > 1) {
+            // Decrease the landowner stage by 1
+            $site->update(['stage' => $site->stage - 1]);
+        } else {
+            // Optionally, you can log or handle the case where the stage is already 0
+            // Log::warning('Attempted to decrease landowner stage below zero for landowner ID: ' . $site->id);
+        }
+    
+        // Redirect to the 'edit' route for the current landowner
+        return redirect()->route('landowner1.edit', ['site' => $site->id]);
+    }   
+
 
    
 

@@ -17,14 +17,7 @@ class Site extends Model
     protected $table = 'sites';
 
 
-    protected $fillable = [
-        'owner_type',
-        'first_name',
-        'other_names',
-        'surname',
-        'company_name',
-        'email',
-        'phone',
+    protected $fillable = [               
         'landowner_id',
         'user_id',
         'sector_id',        
@@ -37,21 +30,23 @@ class Site extends Model
         'stage',
         'application_form',
         'status',
-        'facilitybranch_id'
+        'landarea',
+        'priceofland',
+        'facilitybranch_id',
+        'submit_remarks'
     ];
 
     /**
      * The attributes that should be cast.
      *
      * @var array
-     */   
-
+     */  
+     
     public function landowner()
     {
         return $this->belongsTo(LandOwner::class, 'landowner_id');
     }
 
-    
 
     public function branch()
     {

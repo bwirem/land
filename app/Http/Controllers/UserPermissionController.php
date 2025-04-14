@@ -266,9 +266,9 @@ class UserPermissionController extends Controller
                 ['key' => 'landowner1', 'text' => 'Application', 'icon' => 'landowner_application'],                        
             ],
             'management' => [                
-                ['key' => 'management1', 'text' => 'Land Approval Workflow', 'icon' => 'management_land_approval'],
-                ['key' => 'management2', 'text' => 'Investor Interest Award', 'icon' => 'management_investor_award'],                
-                ['key' => 'management3', 'text' => 'History', 'icon' => 'history'],
+                ['key' => 'management0', 'text' => 'Land Approval Workflow', 'icon' => 'management_land_approval'],
+                ['key' => 'management1', 'text' => 'Investor Interest Award', 'icon' => 'management_investor_award'],                
+                ['key' => 'management2', 'text' => 'History', 'icon' => 'history'],
             ],  
 
             'investor' => [

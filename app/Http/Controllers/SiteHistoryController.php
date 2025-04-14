@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 
-class SiteApprovalController extends Controller
+class SiteHistoryController extends Controller
 {
     /**
      * Display a listing of sites.
@@ -45,7 +45,7 @@ class SiteApprovalController extends Controller
             });
         }
 
-        $query->whereBetween('stage', [4, 6]);       
+        $query->whereBetween('stage', [7, 8]);       
 
         // Filtering by stage
         if ($request->filled('stage')) {
@@ -62,7 +62,7 @@ class SiteApprovalController extends Controller
         // Only show stages less than or equal to 3
         $sites = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        return inertia('SiteApproval/Index', [
+        return inertia('SiteHistory/Index', [
             'sites' => $sites,           
             'filters' => $request->only(['search', 'stage']),
         ]);
@@ -93,7 +93,7 @@ class SiteApprovalController extends Controller
        
 
         $site->load('siteCoordinates');   
-        return inertia('SiteApproval/Review', [
+        return inertia('SiteHistory/Review', [
             'site' => $site,
             'site_coordinates' => $site->siteCoordinates,
             ...$commonData,

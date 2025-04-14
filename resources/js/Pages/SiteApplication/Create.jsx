@@ -22,7 +22,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
     jurisdictions,opportunityTypes,utilities,facilityBranches}) {
     // Form state using Inertia's useForm hook
     const { data, setData, post, errors, processing, reset } = useForm({
-        owner_type: 'individual', // Default value
+        landowner_type: 'individual', // Default value
         first_name: '',
         other_names: '',
         surname: '',
@@ -38,6 +38,8 @@ export default function Create({auth,sectors,activities,allocationMethods,
         utility_id: '',
         project_description: '',      
         stage: 1,
+        landarea: '',
+        priceofland: '',
         applicationForm: null, // Add applicationForm to data
         facilitybranch_id: auth?.user?.facilitybranch_id || "",
     });
@@ -53,7 +55,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
     // New Landowner Modal State
     const [newLandownerModalOpen, setNewLandownerModalOpen] = useState(false);
     const [newLandowner, setNewLandowner] = useState({
-        owner_type: 'individual',
+        landowner_type: 'individual',
         first_name: '',
         other_names: '',
         surname: '',
@@ -183,7 +185,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
     const selectLandowner = (selectedLandowner) => {
         setData((prevData) => ({
             ...prevData,
-            owner_type: selectedLandowner.owner_type,
+            landowner_type: selectedLandowner.landowner_type,
             first_name: selectedLandowner.first_name || '',
             other_names: selectedLandowner.other_names || '',
             surname: selectedLandowner.surname || '',
@@ -203,7 +205,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
         setNewLandownerModalOpen(true);
         setNewLandownerModalSuccess(false); //reset state in case open again
         setNewLandowner({
-            owner_type: 'individual',
+            landowner_type: 'individual',
             first_name: '',
             other_names: '',
             surname: '',
@@ -228,7 +230,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
             if (response.data && response.data.id) {
                 setData((prevData) => ({
                     ...prevData,
-                    owner_type: response.data.owner_type,
+                    landowner_type: response.data.landowner_type,
                     first_name: response.data.first_name,
                     other_names: response.data.other_names,
                     surname: response.data.surname,
@@ -332,7 +334,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
                                                         className="p-2 hover:bg-gray-100 cursor-pointer"
                                                         onClick={() => selectLandowner(landowner)}
                                                     >
-                                                        {landowner.owner_type === 'company' ? landowner.company_name : `${landowner.first_name} ${landowner.surname}`}
+                                                        {landowner.landowner_type === 'company' ? landowner.company_name : `${landowner.first_name} ${landowner.surname}`}
                                                     </li>
                                                 ))
                                             ) : (
@@ -347,10 +349,10 @@ export default function Create({auth,sectors,activities,allocationMethods,
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700">Landowner Type:</label>
-                                                    <p className="mt-1 text-sm text-gray-500">{data.owner_type}</p>
+                                                    <p className="mt-1 text-sm text-gray-500">{data.landowner_type}</p>
                                                 </div>
 
-                                                {data.owner_type === 'individual' ? (
+                                                {data.landowner_type === 'individual' ? (
                                                     <>
                                                         <div>
                                                             <label className="block text-sm font-medium text-gray-700">First Name:</label>
@@ -529,6 +531,37 @@ export default function Create({auth,sectors,activities,allocationMethods,
                                     </div>
                                 </div>
 
+                                {/* Second Row: landarea, priceofland */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+
+                                    <div>
+                                        <label htmlFor="landarea" className="block text-sm font-medium text-gray-700">Land Area</label>
+                                        <input
+                                            type="number"
+                                            id="landarea"
+                                            value={data.landarea}
+                                            onChange={(e) => setData('landarea', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        />
+                                        {errors.landarea && <p className="text-sm text-red-600">{errors.landarea}</p>}
+                                    </div> 
+
+                                    <div>
+                                        <label htmlFor="priceofland" className="block text-sm font-medium text-gray-700">Price of Land</label>
+                                        <input
+                                            type="number"
+                                            id="priceofland"
+                                            value={data.priceofland}
+                                            onChange={(e) => setData('priceofland', e.target.value)}
+                                            className="w-full border p-2 rounded text-sm"
+                                            required
+                                        />
+                                        {errors.priceofland && <p className="text-sm text-red-600">{errors.priceofland}</p>}
+                                    </div> 
+
+                                </div>                                    
+
                                 {/* Project Description */}
                                 <div className="mb-6">
                                     <label htmlFor="project_description" className="block text-sm font-medium text-gray-700">Project Description</label>
@@ -610,10 +643,10 @@ export default function Create({auth,sectors,activities,allocationMethods,
             >
                 <form className="space-y-4">
                     <div>
-                        <label htmlFor="owner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
+                        <label htmlFor="landowner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
                         <select
-                            id="owner_type"
-                            value={newLandowner.owner_type}
+                            id="landowner_type"
+                            value={newLandowner.landowner_type}
                             onChange={handleNewLandownerInputChange}
                             className="w-full border p-2 rounded text-sm"
                             disabled={newLandownerModalLoading || newLandownerModalSuccess}
@@ -623,7 +656,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
                         </select>
                     </div>
 
-                    {newLandowner.owner_type === 'individual' && (
+                    {newLandowner.landowner_type === 'individual' && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">First Name</label>
@@ -661,7 +694,7 @@ export default function Create({auth,sectors,activities,allocationMethods,
                         </div>
                     )}
 
-                    {newLandowner.owner_type === 'company' && (
+                    {newLandowner.landowner_type === 'company' && (
                         <div>
                             <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">Company Name</label>
                             <input

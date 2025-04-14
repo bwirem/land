@@ -13,7 +13,7 @@ export default function Index({ auth, sites, filters }) {
   
   useEffect(() => {
           // Refetch the data whenever search, stage, or facility branch changes
-          get(route("management0.index"), { preserveState: true });
+          get(route("management2.index"), { preserveState: true });
   }, [data.search, data.stage, get]);
 
   const handleSearchChange = (e) => {
@@ -22,7 +22,7 @@ export default function Index({ auth, sites, filters }) {
 
   const handleStageChange = (stage) => {
     setData("stage", stage);
-    get(route("management0.index"), { preserveState: true }); // Manually fetch updated sites
+    get(route("management2.index"), { preserveState: true }); // Manually fetch updated sites
   };
 
   const renderStageLabel = (stage) => {
@@ -71,21 +71,21 @@ export default function Index({ auth, sites, filters }) {
             <li
               key="pending"
               className={`cursor-pointer px-2 py-1 rounded text-sm flex items-center ${
-                data.stage === "4" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"
+                data.stage === "7" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"
               }`}
-              onClick={() => handleStageChange("4")}
+              onClick={() => handleStageChange("7")}
             >
-              Pending
+              Approved
             </li>
 
             <li
               key="reviewed"
               className={`cursor-pointer px-2 py-1 rounded text-sm flex items-center ${
-                data.stage === "5,6" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"
+                data.stage === "8" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"
               }`}
-              onClick={() => handleStageChange("5,6")}
+              onClick={() => handleStageChange("8")}
             >
-              Reviewed
+              Rejected
             </li>            
                    
           </ul>
@@ -119,7 +119,7 @@ export default function Index({ auth, sites, filters }) {
                     </td>
                     <td className="border-b p-3 text-gray-700 text-left">{site.project_description}</td> 
                     <td className="border-b p-3 flex space-x-2 justify-center">
-                      <Link href={route("management0.edit", site.id)} className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs flex items-center">
+                      <Link href={route("management2.edit", site.id)} className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs flex items-center">
                         <FontAwesomeIcon icon={faEdit} className="mr-1" />
                         Process
                       </Link>

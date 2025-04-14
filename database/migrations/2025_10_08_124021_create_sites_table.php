@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+
 return new class extends Migration
 {
     /**
@@ -13,13 +14,7 @@ return new class extends Migration
     {
         Schema::create('sites', function (Blueprint $table) {
             $table->id();
-            $table->enum('owner_type', ['individual', 'company'])->default('individual');
-            $table->string('first_name')->nullable();
-            $table->string('other_names')->nullable();
-            $table->string('surname')->nullable();
-            $table->string('company_name')->nullable();
-            $table->string('email');
-            $table->string('phone', 13)->nullable();
+
             $table->foreignId('landowner_id')->nullable()->constrained('landowners')->onDelete('set null');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             

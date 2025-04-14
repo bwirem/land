@@ -49,9 +49,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function loanApprovals()
+    public function siteApprovals()
     {
-        return $this->hasMany(LoanApproval::class, 'approved_by');
+        return $this->hasMany(SiteApproval::class, 'approved_by');
     }
 
     /**
@@ -66,6 +66,6 @@ class User extends Authenticatable
 
     public function userGroup()
     {
-        return $this->belongsTo(UserGroup::class);
+        return $this->belongsTo(UserGroup::class, 'usergroup_id'); // Ensure this is correc
     }
 }

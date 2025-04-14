@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+use App\Enums\CustomerType;
+use App\Enums\DocumentType;
+
+
 return new class extends Migration
 {
     /**
@@ -14,9 +18,9 @@ return new class extends Migration
     public function up()
     {
         Schema::create('investors', function (Blueprint $table) {
-            $table->id();
-            $table->enum('investor_type', ['individual', 'company'])->default('individual'); // Individual or company guarantor
-            
+            $table->id();           
+            // Use CustomerType::cases() to get all the customer types
+            $table->enum('investor_type', array_map(fn($type) => $type->value, CustomerType::cases()))->default(CustomerType::INDIVIDUAL->value);
             // Individual Guarantor Fields
             $table->string('first_name')->nullable(); // Required for individuals
             $table->string('other_names')->nullable();
@@ -26,7 +30,21 @@ return new class extends Migration
             $table->string('company_name')->nullable(); // Required for companies
             
             $table->string('email')->nullable()->unique(); // Email is nullable but should be unique if provided
-            $table->string('phone', 13)->nullable(); // Phone number, allowing nulls            
+            $table->string('phone', 13)->nullable(); // Phone number, allowing nulls    
+            
+            $table->foreignId('ward_id')->nullable()->constrained('loc_wards')->onDelete('set null'); 
+            $table->string('address')->nullable();
+
+            $table->integer('stage')->default(1); //Numerical stage.
+
+            $table->enum('document_type', array_map(fn($type) => $type->value, DocumentType::cases()))->default(DocumentType::NIDA->value);
+
+            $table->string('document_number')->nullable();
+            $table->text('document_path')->nullable();
+
+            $table->text('selfie_path')->nullable(); // Store selfie path
+
+            $table->text('remarks')->nullable();
           
             $table->timestamps();
         });

@@ -1,21 +1,21 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head,Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-svg-core/styles.css';
-import { Inertia } from '@inertiajs/inertia';
 import Modal from '@/Components/CustomModal';
 
-export default function Create() {
+export default function Create({customerTypes}) {
     const { data, setData, post, errors, processing, reset } = useForm({
-        owner_type: 'individual', // Default value
+        landowner_type: 'individual', // Default value
         first_name: '',
         other_names: '',
         surname: '',
         company_name: '',
         email: '',
         phone: '',
+        address: '',
     });
 
     const [modalState, setModalState] = useState({
@@ -62,12 +62,12 @@ export default function Create() {
 
     const resetForm = () => {
         reset();
-        showAlert('Landowner created successfully!');
+        showAlert('landowner created successfully!');
     };
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">New Landowner</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">New Land Owner</h2>}
         >
             <Head title="New Landowner" />
             <div className="py-12">
@@ -77,21 +77,24 @@ export default function Create() {
 
                             {/* Landowner Type */}
                             <div>
-                                <label htmlFor="owner_type" className="block text-sm font-medium text-gray-700">Landowner Type</label>
+                                <label htmlFor="landowner_type" className="block text-sm font-medium text-gray-700">Land Owner Type</label>
                                 <select
-                                    id="owner_type"
-                                    value={data.owner_type}
-                                    onChange={(e) => setData('owner_type', e.target.value)}
+                                    id="landowner_type"
+                                    value={data.landowner_type}
+                                    onChange={(e) => setData('landowner_type', e.target.value)}
                                     className="w-full border p-2 rounded text-sm"
                                 >
-                                    <option value="individual">Individual</option>
-                                    <option value="company">Company</option>
+                                    {customerTypes.map((type) => (
+                                        <option key={type.value} value={type.value}>
+                                            {type.label}
+                                        </option>
+                                    ))}
                                 </select>
-                                {errors.owner_type && <p className="text-sm text-red-600">{errors.owner_type}</p>}
-                            </div>
+                                {errors.landowner_type && <p className="text-sm text-red-600">{errors.landowner_type}</p>}
+                            </div>                            
 
                             {/* Individual Landowner Fields */}
-                            {data.owner_type === 'individual' && (
+                            {data.landowner_type === 'individual' && (
                                 <div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
@@ -132,7 +135,7 @@ export default function Create() {
                             )}
 
                             {/* Company Landowner Fields */}
-                            {data.owner_type === 'company' && (
+                            {data.landowner_type === 'company' && (
                                 <div>
                                     <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">Company Name</label>
                                     <input
@@ -145,40 +148,60 @@ export default function Create() {
                                     {errors.company_name && <p className="text-sm text-red-600">{errors.company_name}</p>}
                                 </div>
                             )}
+                            
 
                             {/* Common Fields */}
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    className={`w-full border p-2 rounded text-sm ${errors.email ? 'border-red-500' : ''}`}
-                                />
-                                {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-                            </div>
-                            <div>
-                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                                <input
-                                    type="text"
-                                    id="phone"
-                                    value={data.phone}
-                                    onChange={(e) => setData('phone', e.target.value)}
-                                    className={`w-full border p-2 rounded text-sm ${errors.phone ? 'border-red-500' : ''}`}
-                                />
-                                {errors.phone && <p className="text-sm text-red-600">{errors.phone}</p>}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            value={data.email}
+                                            onChange={(e) => setData('email', e.target.value)}
+                                            className={`w-full border p-2 rounded text-sm ${errors.email ? 'border-red-500' : ''}`}
+                                        />
+                                        {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                                        <input
+                                            type="text"
+                                            id="phone"
+                                            value={data.phone}
+                                            onChange={(e) => setData('phone', e.target.value)}
+                                            className={`w-full border p-2 rounded text-sm ${errors.phone ? 'border-red-500' : ''}`}
+                                        />
+                                        {errors.phone && <p className="text-sm text-red-600">{errors.phone}</p>}
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="flex justify-end space-x-4 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => Inertia.get(route('landowner0.index'))}
+                            <div>
+                                <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
+                                <input
+                                    type="text"
+                                    id="address"
+                                    value={data.address}
+                                    onChange={(e) => setData('address', e.target.value)}
+                                    className={`w-full border p-2 rounded text-sm ${errors.address ? 'border-red-500' : ''}`}
+                                />
+                                {errors.address && <p className="text-sm text-red-600">{errors.address}</p>}
+                            </div>
+                            
+
+
+                            <div className="flex justify-end space-x-4 mt-6"> 
+                                <Link
+                                    href={route('landowner0.index')}
+                                    method="get"  // Optional, if you want to define the HTTP method (GET is default)
+                                    preserveState={true}  // Keep the page state (similar to `preserveState: true` in the button)
                                     className="bg-gray-300 text-gray-700 rounded p-2 flex items-center space-x-2"
                                 >
                                     <FontAwesomeIcon icon={faTimesCircle} />
                                     <span>Cancel</span>
-                                </button>
+                                </Link>
                                 <button
                                     type="submit"
                                     disabled={processing || isSaving}

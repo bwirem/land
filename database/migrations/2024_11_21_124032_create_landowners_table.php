@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\CustomerType;
+use App\Enums\DocumentType;
 
 return new class extends Migration
 {
@@ -15,7 +17,8 @@ return new class extends Migration
     {
         Schema::create('landowners', function (Blueprint $table) {
             $table->id();
-            $table->enum('owner_type', ['individual', 'company'])->default('individual'); // Indicate if it's an individual or company
+           // Use CustomerType::cases() to get all the customer types
+            $table->enum('landowner_type', array_map(fn($type) => $type->value, CustomerType::cases()))->default(CustomerType::INDIVIDUAL->value);
 
             // Individual Customer Fields
             $table->string('first_name')->nullable(); // Required for individuals
@@ -27,6 +30,21 @@ return new class extends Migration
 
             $table->string('email')->nullable()->unique(); // Email is nullable but should be unique if provided
             $table->string('phone', 13)->nullable(); // Specify length and allow nulls
+
+            $table->foreignId('ward_id')->nullable()->constrained('loc_wards')->onDelete('set null'); 
+            $table->string('address')->nullable();
+
+            $table->integer('stage')->default(1); //Numerical stage.
+
+            $table->enum('document_type', array_map(fn($type) => $type->value, DocumentType::cases()))->default(DocumentType::NIDA->value);
+
+            $table->string('document_number')->nullable();
+            $table->text('document_path')->nullable();
+
+            $table->text('selfie_path')->nullable(); // Store selfie path
+
+            $table->text('remarks')->nullable();
+
             $table->timestamps();
         });
     }

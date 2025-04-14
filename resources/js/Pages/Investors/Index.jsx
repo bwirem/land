@@ -101,11 +101,7 @@ export default function Index({ auth, investors, filters }) {
                     <table className="min-w-full border border-gray-300 shadow-md rounded">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Type</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">First Name</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Other Names</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Surname</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Company</th>
+                                <th className="border-b p-3 text-left font-medium text-gray-700">Investor</th>                                
                                 <th className="border-b p-3 text-left font-medium text-gray-700">Email</th>
                                 <th className="border-b p-3 text-left font-medium text-gray-700">Phone</th>
                                 <th className="border-b p-3 text-center font-medium text-gray-700">Actions</th>
@@ -115,11 +111,13 @@ export default function Index({ auth, investors, filters }) {
                             {investors.data.length > 0 ? (
                                 investors.data.map((investor, index) => (
                                     <tr key={investor.id} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                                        <td className="border-b p-3 text-gray-700">{investor.investor_type}</td>
-                                        <td className="border-b p-3 text-gray-700">{investor.first_name}</td>
-                                        <td className="border-b p-3 text-gray-700">{investor.other_names}</td>
-                                        <td className="border-b p-3 text-gray-700">{investor.surname}</td>
-                                        <td className="border-b p-3 text-gray-700">{investor.company_name}</td>
+                                        <td className="border-b p-3 text-gray-700">
+                                            {investor.investor_type === 'individual' ? (
+                                                `${investor.first_name} ${investor.other_names ? investor.other_names + ' ' : ''}${investor.surname}`
+                                            ) : (
+                                                investor.company_name
+                                            )}
+                                        </td>
                                         <td className="border-b p-3 text-gray-700">{investor.email}</td>
                                         <td className="border-b p-3 text-gray-700">{investor.phone}</td>
 

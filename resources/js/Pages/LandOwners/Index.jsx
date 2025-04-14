@@ -65,9 +65,9 @@ export default function Index({ auth, landowners, filters }) {
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold text-gray-800">Land Owner List</h2>}
+            header={<h2 className="text-xl font-semibold text-gray-800">Land Owners List</h2>}
         >
-            <Head title="Land Owner List" />
+            <Head title="landowner List" />
             <div className="container mx-auto p-4">
                 {/* Header Actions */}
                 <div className="flex flex-col md:flex-row justify-between items-center mb-4">
@@ -96,16 +96,12 @@ export default function Index({ auth, landowners, filters }) {
 
                 </div>
 
-                {/* Landowners Table */}
+                {/* landowners Table */}     
                 <div className="overflow-x-auto">
                     <table className="min-w-full border border-gray-300 shadow-md rounded">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Type</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">First Name</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Other Names</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Surname</th>
-                                <th className="border-b p-3 text-left font-medium text-gray-700">Company</th>
+                                <th className="border-b p-3 text-left font-medium text-gray-700">Land Owner</th>
                                 <th className="border-b p-3 text-left font-medium text-gray-700">Email</th>
                                 <th className="border-b p-3 text-left font-medium text-gray-700">Phone</th>
                                 <th className="border-b p-3 text-center font-medium text-gray-700">Actions</th>
@@ -115,35 +111,36 @@ export default function Index({ auth, landowners, filters }) {
                             {landowners.data.length > 0 ? (
                                 landowners.data.map((landowner, index) => (
                                     <tr key={landowner.id} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                                        <td className="border-b p-3 text-gray-700">{landowner.owner_type}</td>
-                                        <td className="border-b p-3 text-gray-700">{landowner.first_name}</td>
-                                        <td className="border-b p-3 text-gray-700">{landowner.other_names}</td>
-                                        <td className="border-b p-3 text-gray-700">{landowner.surname}</td>
-                                        <td className="border-b p-3 text-gray-700">{landowner.company_name}</td>
+                                        <td className="border-b p-3 text-gray-700">
+                                            {landowner.landowner_type === 'individual' ? (
+                                                `${landowner.first_name} ${landowner.other_names ? landowner.other_names + ' ' : ''}${landowner.surname}`
+                                            ) : (
+                                                landowner.company_name
+                                            )}
+                                        </td>
                                         <td className="border-b p-3 text-gray-700">{landowner.email}</td>
                                         <td className="border-b p-3 text-gray-700">{landowner.phone}</td>
-
                                         <td className="border-b p-3 flex space-x-2 justify-center">
                                             <Link
                                                 href={route("landowner0.edit", landowner.id)}
                                                 className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs flex items-center"
                                             >
                                                 <FontAwesomeIcon icon={faEdit} className="mr-1" />
-                                                Edit
+                                                {landowner.stage === 2 ? "Process" : landowner.stage === 3 ? "Preview" : "Edit"}
                                             </Link>
                                             <button
                                                 onClick={() => handleDelete(landowner.id)}
                                                 className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex items-center"
                                             >
                                                 <FontAwesomeIcon icon={faTrash} className="mr-1" />
-                                                Delete
+                                                Reject
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="8" className="border-b p-3 text-center text-gray-700">No Landowners found.</td>
+                                    <td colSpan="4" className="border-b p-3 text-center text-gray-700">No landowners found.</td>
                                 </tr>
                             )}
                         </tbody>

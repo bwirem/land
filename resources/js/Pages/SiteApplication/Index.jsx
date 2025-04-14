@@ -36,9 +36,8 @@ export default function Index({ auth, sites, filters }) {
 
     const siteStageLabels = {
         1: 'Draft',  
-        2: 'Coordinating',
-        3: 'Documentation',      
-        4: 'Submitted',            
+        2: 'Coordinating', 
+        3: 'Submission',             
     };
 
     return (
@@ -56,7 +55,7 @@ export default function Index({ auth, sites, filters }) {
                             <input
                                 type="text"
                                 name="search"
-                                placeholder="Search by customer name"
+                                placeholder="Search by land owner name"
                                 value={data.search}
                                 onChange={handleSearchChange}
                                 className={`pl-10 border px-2 py-1 rounded text-sm ${errors.search ? "border-red-500" : ""}`}
@@ -98,24 +97,28 @@ export default function Index({ auth, sites, filters }) {
                             <tr>
                                 <th className="border-b p-3 text-left font-medium text-gray-700">Land Owner</th>
                                 <th className="border-b p-3 text-left font-medium text-gray-700">Project Description</th>  
-                                <th className="border-b p-3 text-center font-medium text-gray-700">Stage</th>                           
                                 <th className="border-b p-3 text-center font-medium text-gray-700">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {sites.data.length > 0 ? (
                                 sites.data.map((site, index) => (
-                                    <tr key={site.id} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                                        <td className="border-b p-3 text-gray-700">{site.first_name ? site.first_name : site.company_name}</td>                                        
-                                        <td className="border-b p-3 text-gray-700 text-right">{site.project_description}</td>                                       
-                                        <td className="border-b p-3 text-center text-gray-700">{siteStageLabels[site.stage]}</td>
+                                    <tr key={site.id} className={index % 2 === 0 ? 'bg-gray-50' : ''}>                                       
+                                        <td className="border-b p-3 text-gray-700">
+                                            {site.landowner.landowner_type === 'individual' ? (
+                                                `${site.landowner.first_name} ${site.landowner.other_names ? site.landowner.other_names + ' ' : ''}${site.landowner.surname}`
+                                            ) : (
+                                                site.landowner.company_name
+                                            )}
+                                        </td>
+                                        <td className="border-b p-3 text-gray-700 text-left">{site.project_description}</td> 
                                         <td className="border-b p-3 flex space-x-2 justify-center">
                                             <Link
                                                 href={route("landowner1.edit", site.id)}
                                                 className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs flex items-center"
                                             >
-                                                <FontAwesomeIcon icon={faEdit} className="mr-1" />                                              
-                                                {site.stage === 2 ? "Process" : site.stage === 3 ? "Process": site.stage === 4 ? "Preview" : "Edit"}
+                                                <FontAwesomeIcon icon={faEdit} className="mr-1" />
+                                                {site.stage === 2 ? "Process" : site.stage === 3 ? "Preview" : "Edit"}
                                             </Link>                                           
                                         </td>
                                     </tr>
