@@ -18,7 +18,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('investors', function (Blueprint $table) {
-            $table->id();           
+            $table->id();      
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');     
             // Use CustomerType::cases() to get all the customer types
             $table->enum('investor_type', array_map(fn($type) => $type->value, CustomerType::cases()))->default(CustomerType::INDIVIDUAL->value);
             // Individual Guarantor Fields

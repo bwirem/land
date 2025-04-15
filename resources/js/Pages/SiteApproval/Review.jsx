@@ -43,6 +43,8 @@ export default function Submission({ site,site_coordinates,sectors, jurisdiction
         project_description: site.project_description || '',
         facilitybranch_id: site.facilitybranch_id || "",
         stage: site.stage,
+        landarea: site.landarea || '', // Set the default value to an empty string
+        priceofland: site.priceofland || '', // Set the default value to an empty string
         coordinate_type: '', // Set the default value to an empty string
         coordinates: site_coordinates || [],       
 
@@ -305,7 +307,18 @@ export default function Submission({ site,site_coordinates,sectors, jurisdiction
                                         <p className="mt-1 text-sm text-gray-500">
                                             {utilities.find(utility => utility.id === site.utility_id)?.name || 'N/A'}
                                         </p>
-                                    </div>                                    
+                                    </div>   
+
+                                     <div>
+                                        <label className="block text-sm font-medium text-gray-700">Land Area:</label>
+                                        <p className="mt-1 text-sm text-gray-500">{data.landarea}</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Price of Land:</label>
+                                        <p className="mt-1 text-sm text-gray-500">{data.priceofland}</p>
+                                    </div> 
+
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                                     <div>
@@ -430,7 +443,7 @@ export default function Submission({ site,site_coordinates,sectors, jurisdiction
                                     className="bg-gray-300 text-gray-700 rounded p-2 flex items-center space-x-2"
                                 >
                                     <FontAwesomeIcon icon={faTimesCircle} />
-                                    <span>Cancel</span>
+                                    <span>Close</span>
                                 </Link>
 
                                  <Link

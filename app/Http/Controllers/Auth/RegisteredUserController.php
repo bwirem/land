@@ -31,9 +31,30 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function createmain(): Response
+    {      
+        return Inertia::render('Auth/RegisterMain');
+    }
+
+    public function createadmin(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'userGroup' => 'Admin',
+        ]);       
+    }
+
+    public function createlandowner(): Response
+    {
+        return Inertia::render('Auth/Register', [
+            'userGroup' => 'Landowner',
+        ]);       
+    }
+
+    public function createinvestor(): Response
+    {
+        return Inertia::render('Auth/Register', [
+            'userGroup' => 'Investor',
+        ]);       
     }
 
     /**
@@ -44,21 +65,21 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
+            'usergroup' => 'required|in:Admin,Landowner,Investor',
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Check if the user group 'Admin' exists or create it
-        $userGroup = UserGroup::firstOrCreate(['name' => 'Admin']);
+        // Create or retrieve the user group
+        $userGroup = UserGroup::firstOrCreate(['name' => $request->usergroup]);
 
-        // Assign permissions to the 'Admin' group if it was just created
-        if ($userGroup->wasRecentlyCreated) {
+        // Assign permissions to Admin group if it was just created
+        if ($request->usergroup === 'Admin' && $userGroup->wasRecentlyCreated) {
             $this->userPermissionController->assignAllPermissionsToAdmin($userGroup);
         }
 
-
-        // Create a new user associated with the user group
+        // Create the user and associate with the user group
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -70,6 +91,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('dashboard');
     }
+
 }

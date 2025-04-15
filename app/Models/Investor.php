@@ -15,6 +15,7 @@ class Investor extends Model
 
     // Add attributes to $fillable array for mass assignment
     protected $fillable = [
+        'user_id',
         'investor_type',
         'first_name',
         'other_names',

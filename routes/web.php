@@ -20,6 +20,7 @@ use App\Http\Controllers\SiteOpportunityTypeController;
 
 use App\Http\Controllers\LandOwnerController;
 use App\Http\Controllers\InvestorController;
+use App\Http\Controllers\SiteReportController;
 
 
 use App\Http\Controllers\LOCCountryController;
@@ -140,6 +141,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/{investor}/edit', [SiteInterestController::class, 'edit'])->name('edit'); 
         Route::put('/{investor}', [SiteInterestController::class, 'update'])->name('update');      
     });
+
+
+    Route::prefix('reportingAnalytics0')->name('reportingAnalytics0.')->group(function () {       
+        Route::get('/', [SiteReportController::class, 'landPortfolioReport'])->name('land-portfolio');
+        Route::get('/{site}/view', [SiteReportController::class, 'view'])->name('view'); 
+    });    
 
     
     // Routes for site Setup (Version 3)

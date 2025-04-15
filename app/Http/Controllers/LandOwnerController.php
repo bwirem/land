@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use App\Enums\CustomerType;
 use App\Enums\DocumentType;
 
@@ -30,6 +31,13 @@ class LandOwnerController extends Controller
                     ->orWhere('company_name', 'like', '%' . $request->search . '%');
             });
         }
+
+        $user = auth()->user();
+        $userGroup = $user->userGroup; 
+        
+        if($userGroup->name == 'Landowner') {
+            $query->where('user_id', $user->id);
+        } 
 
         // Paginate the results
         $landowners = $query->orderBy('created_at', 'desc')->paginate(10);
@@ -91,6 +99,9 @@ class LandOwnerController extends Controller
             $validated['surname'] = null; // Ensure individual fields are null
         }
 
+         // Add user_id before saving
+         $validated['user_id'] = Auth::id();
+
         // Create the landowner
         $landowner = LandOwner::create($validated);  
 
@@ -130,6 +141,9 @@ class LandOwnerController extends Controller
             $validated['other_names'] = null;
             $validated['surname'] = null; // Ensure individual fields are null
         }
+
+         // Add user_id before saving
+         $validated['user_id'] = Auth::id();
 
         // Create the landowner
         $landowner = LandOwner::create($validated);
@@ -221,6 +235,9 @@ class LandOwnerController extends Controller
             $validated['surname'] = null;
             $validated['other_names'] = null;
         }
+
+        // Add user_id before saving
+        $validated['user_id'] = Auth::id();
 
         // Initialize mappedData for file handling
         $mappedData = [];

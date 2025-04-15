@@ -17,6 +17,9 @@ return new class extends Migration
     {
         Schema::create('landowners', function (Blueprint $table) {
             $table->id();
+
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+         
            // Use CustomerType::cases() to get all the customer types
             $table->enum('landowner_type', array_map(fn($type) => $type->value, CustomerType::cases()))->default(CustomerType::INDIVIDUAL->value);
 

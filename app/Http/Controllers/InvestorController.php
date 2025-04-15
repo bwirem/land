@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Investor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class InvestorController extends Controller
 {
@@ -24,6 +25,13 @@ class InvestorController extends Controller
                     ->orWhere('company_name', 'like', '%' . $request->search . '%');
             });
         }
+
+        $user = auth()->user();
+        $userGroup = $user->userGroup; 
+        
+        if($userGroup->name == 'Landowner') {
+            $query->where('user_id', $user->id);
+        } 
 
         // Paginate the results
         $investors = $query->orderBy('created_at', 'desc')->paginate(10);
@@ -80,6 +88,9 @@ class InvestorController extends Controller
             // Ensure individual fields are null
         }
 
+         // Add user_id before saving
+         $validated['user_id'] = Auth::id();
+
         // Create the investor
         Investor::create($validated);
 
@@ -119,6 +130,9 @@ class InvestorController extends Controller
              $validated['other_names'] = null;
              $validated['surname'] = null; // Ensure individual fields are null
         }
+
+         // Add user_id before saving
+        $validated['user_id'] = Auth::id();
 
         // Create the investor
         $investor = Investor::create($validated);
@@ -184,6 +198,9 @@ class InvestorController extends Controller
             $validated['surname'] = null; // Ensure individual fields are null
 
         }
+
+         // Add user_id before saving
+         $validated['user_id'] = Auth::id();
 
         // Update the investor
         $investor->update($validated);

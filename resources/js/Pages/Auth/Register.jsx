@@ -5,8 +5,9 @@ import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Register() {
+export default function Register({userGroup}) {
     const { data, setData, post, processing, errors, reset } = useForm({
+        usergroup: userGroup,
         name: '',
         email: '',
         password: '',

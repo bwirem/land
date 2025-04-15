@@ -75,10 +75,7 @@ class SiteHistoryController extends Controller
     {  
         $site->load('landowner');
         $site->load('approvals.approver.userGroup'); 
-
      
-        Log::info($site->approvals->toArray());
-       
         // Common data to be passed to the view
         $commonData = [
             'sectors' => SiteSector::all(),
@@ -102,69 +99,7 @@ class SiteHistoryController extends Controller
         
     }
     
-
-    /**
-     * Show the form for approve the specified site.
-     */
-         
-    public function approve(Request $request, Site $site)
-    {
-        // ... validation ...
     
-        DB::transaction(function () use ($request, $site) {
-            $currentStage = SiteStage::from($site->stage);
-    
-            if (!$currentStage) {
-                // Handle invalid stage (e.g., throw an exception or return an error response)
-                abort(400, 'Invalid site stage.'); 
-            }
-    
-    
-            $nextStage = match ($currentStage) {
-                SiteStage::SiteOfficerReview => SiteStage::ManagerReview,
-                SiteStage::ManagerReview => SiteStage::CommitteeReview,
-                SiteStage::CommitteeReview => SiteStage::Approved,
-                default => null, // No next stage (already approved or rejected, or in an unapprovable state)
-            };
-    
-            $approval = $site->approvals()->where([
-                //'approved_by' => auth()->user()->id,
-                'stage' => $currentStage->value,  // Use ->value here
-                'status' => ApprovalStatus::Pending->value // Assuming ApprovalStatus is also an enum
-            ])->firstOrFail();
-    
-    
-    
-            // Update the current approval record
-            $approval->update([
-                'approved_by' => auth()->user()->id,
-                'status' => ApprovalStatus::Approved->value, 
-                'remarks' => $request->input('remarks'
-            )]);
-                
-    
-            if ($nextStage) {
-                // Update site stage
-                $site->update(['stage' => $nextStage->value]);
-    
-                // Create a new approval record for the next stage
-                $site->approvals()->create([
-                    'stage' => $nextStage->value,
-                    'status' => ApprovalStatus::Pending->value,
-                    'approved_by' => auth()->user()->id,
-                    // ... other fields ... (e.g., assigned approver)
-                ]);
-    
-                // ... send notification to the next approver ...
-            } 
-    
-        });
-    
-        // ...
-        return redirect()->route('management0.index')->with('success', 'Site approved successfully.');
-    }
-
-
     public function back(Site $site)
     { 
         // Check if the current stage is greater than 0

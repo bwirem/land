@@ -20,7 +20,7 @@ function convertUTMToLatLong(northing, easting) {
     return { latitude, longitude };
 }
 
-export default function Submission({ site,site_coordinates,sectors, jurisdictions, opportunityTypes, activities, 
+export default function Details({ site,site_coordinates,sectors, jurisdictions, opportunityTypes, activities, 
     allocationMethods, utilities, facilityBranches }) {
 
     // Form state using Inertia's useForm hook
@@ -201,9 +201,9 @@ export default function Submission({ site,site_coordinates,sectors, jurisdiction
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Review</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Land Details</h2>}
         >
-            <Head title="Review" />
+            <Head title="Land Details" />
             <div className="py-12">
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="bg-white p-6 shadow sm:rounded-lg">
@@ -317,8 +317,7 @@ export default function Submission({ site,site_coordinates,sectors, jurisdiction
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">Price of Land:</label>
                                         <p className="mt-1 text-sm text-gray-500">{data.priceofland}</p>
-                                    </div> 
-
+                                    </div>                                   
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                                     <div>
@@ -437,22 +436,14 @@ export default function Submission({ site,site_coordinates,sectors, jurisdiction
                             {/* Submit Button */}
                             <div className="flex justify-end space-x-4 mt-6">
                                 <Link
-                                    href={route('management2.index')}  // Using the route for navigation
+                                    href={route('reportingAnalytics0.land-portfolio')}  // Using the route for navigation
                                     method="get"
                                     preserveState={true}
                                     className="bg-gray-300 text-gray-700 rounded p-2 flex items-center space-x-2"
                                 >
                                     <FontAwesomeIcon icon={faTimesCircle} />
                                     <span>Close</span>
-                                </Link>
-
-                                 <Link
-                                    href={route('management2.back', site.id)}
-                                    className="bg-blue-300 text-blue-700 rounded p-2 flex items-center space-x-2"
-                                >
-                                    <FontAwesomeIcon icon={faArrowLeft} />
-                                    <span>Return</span>
-                                </Link>                                
+                                </Link>                                                      
                                 
                             </div>
                         </form>

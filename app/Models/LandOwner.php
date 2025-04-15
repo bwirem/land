@@ -15,6 +15,7 @@ class LandOwner extends Model
 
     // Add attributes to $fillable array for mass assignment
     protected $fillable = [
+        'user_id',
         'landowner_type',
         'first_name',
         'other_names',

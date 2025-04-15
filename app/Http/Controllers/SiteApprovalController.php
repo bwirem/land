@@ -77,8 +77,6 @@ class SiteApprovalController extends Controller
         $site->load('approvals.approver.userGroup'); 
 
      
-        Log::info($site->approvals->toArray());
-       
         // Common data to be passed to the view
         $commonData = [
             'sectors' => SiteSector::all(),

@@ -11,11 +11,22 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
+Route::middleware('guest')->group(function () {    
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::get('registermain', [RegisteredUserController::class, 'createmain'])
+        ->name('registermain');
+
+    Route::get('registeradmin', [RegisteredUserController::class, 'createadmin'])
+        ->name('registeradmin');    
+
+    Route::get('registerlandowner', [RegisteredUserController::class, 'createlandowner'])
+        ->name('registerlandowner');
+
+    Route::get('registerinvestor', [RegisteredUserController::class, 'createinvestor'])
+        ->name('registerinvestor');
+
+
+    Route::post('register', [RegisteredUserController::class, 'store'])->name('register');   
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

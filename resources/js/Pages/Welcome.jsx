@@ -93,7 +93,7 @@ export default function WelcomeSupport({ auth, initialSectors, initialSites, ini
                                 <Link href={route("login")} className="bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600 transition">
                                     Log In
                                 </Link>
-                                <Link href={route("register")} className="bg-transparent text-blue-500 px-3 py-1 rounded-full hover:bg-blue-500 hover:text-white transition ring-1 ring-blue-500">
+                                <Link href={route("registermain")} className="bg-transparent text-blue-500 px-3 py-1 rounded-full hover:bg-blue-500 hover:text-white transition ring-1 ring-blue-500">
                                     Register
                                 </Link>
                             </>

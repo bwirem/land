@@ -88,16 +88,46 @@ class WelComeController extends Controller
      */
     public function dashboard(): Response
     {
-        return Inertia::render('Dashboard', [
-            'stats' => [
-                'landowners' => LandOwner::count(),
-                'sites' => Site::count(),
-                'investors' => Investor::count(),
-                'site_interests' => SiteInvestor::count(),
-                'withdrawals' => 0, // \App\Models\Withdrawal::sum('amount'),
-                'pending_sites' => 0, // \App\Models\Site::where('status', 'pending')->count(),
-            ],
-        ]);
+        $user = auth()->user();
+        $userGroup = $user->userGroup;  // Not userGroup()
+
+        
+        if($userGroup->name == 'Landowner') {
+            $landOwner = LandOwner::where('user_id', $user->id)->count();
+            $site = Site::where('user_id', $user->id)->count();
+            return Inertia::render('DashboardLand', [
+                'stats' => [
+                    'landowners' => $landOwner,
+                    'sites' => $site,                    
+                ],
+            ]);
+
+        }else if($userGroup->name == 'Investor') {
+            $investor = Investor::where('user_id', $user->id)->first();           
+            $siteInvestor = SiteInvestor::where('user_id', $user->id)->count();
+
+            return Inertia::render('DashboardInvestor', [
+                'stats' => [                    
+                    'investors' => $investor,
+                    'site_interests' => SiteInvestor::count(),                   
+                ],
+            ]);
+
+
+        }else if($userGroup->name == 'Admin') {
+
+            return Inertia::render('Dashboard', [
+                'stats' => [
+                    'landowners' => LandOwner::count(),
+                    'sites' => Site::count(),
+                    'investors' => Investor::count(),
+                    'site_interests' => SiteInvestor::count(),
+                    'withdrawals' => 0, // \App\Models\Withdrawal::sum('amount'),
+                    'pending_sites' => 0, // \App\Models\Site::where('status', 'pending')->count(),
+                ],
+            ]);
+
+        }
     }
 
 
