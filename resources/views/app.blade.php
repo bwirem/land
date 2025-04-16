@@ -4,10 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
-
-        <!-- 🔐 CSRF token for JS apps -->
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <title inertia>{{ config('app.name', 'Laravel') }}</title>        
 
         <!-- Favicon -->
         <link rel="icon" href="/img/favicon.ico" type="image/x-icon">

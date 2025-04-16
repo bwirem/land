@@ -1,151 +1,141 @@
 import React, { useState, useEffect } from "react";
-import { Head } from "@inertiajs/react";
+import { Head, useForm, usePage } from "@inertiajs/react"; 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faIndustry, faLocationDot, faLocation, faGavel, faMountain, faSpa, 
+import { faCheck, faIndustry, faLocationDot, faLocation, faGavel, faMountain, faSpa,
 faRulerCombined, faLandmark, faLightbulb, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import MapView from '../Components/MapView';
+import InputLabel from '@/Components/InputLabel';      
+import TextInput from '@/Components/TextInput';        
+import InputError from '@/Components/InputError';      
+import PrimaryButton from '@/Components/PrimaryButton';  
+import SecondaryButton from '@/Components/SecondaryButton';
+
+const FlashMessage = ({ message, type = 'success' }) => {
+    if (!message) return null;
+
+    const baseStyle = "p-4 mb-4 text-sm rounded-lg";
+    const styles = {
+        success: `${baseStyle} text-green-800 bg-green-100 dark:bg-gray-800 dark:text-green-400`,
+        error: `${baseStyle} text-red-800 bg-red-100 dark:bg-gray-800 dark:text-red-400`,
+        warning: `${baseStyle} text-yellow-800 bg-yellow-100 dark:bg-gray-800 dark:text-yellow-300`,
+        info: `${baseStyle} text-blue-800 bg-blue-100 dark:bg-gray-800 dark:text-blue-400`,
+    };
+
+    const typeKey = type.toLowerCase();
+    const typeName = typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
+
+    return (
+        <div className={styles[typeKey] || styles.info} role="alert">
+            <span className="font-medium">{typeName}!</span> {message}
+        </div>
+    );
+};
+
 
 export default function SiteDetail({ site, area }) {
+    const { props } = usePage();
+    const { flash } = props; // Destructure flash 
+
+    const successMessage = flash?.success || null;
+    const errorMessage = flash?.error || null;
+    const infoMessage = flash?.info || null;
+
+
     const [mapData, setMapData] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false); 
-    const [formData, setFormData] = useState({
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const { data, setData, put, processing, errors, reset, clearErrors, recentlySuccessful } = useForm({
         investorName: "",
         investorEmail: "",
         investorPhone: "",
         description: ""
     });
-    const [formErrors, setFormErrors] = useState({}); 
+    
 
     useEffect(() => {
         if (area) {
             setMapData({
-                // center: area.coordinates.length ? area.coordinates[0] : [-6.7857, 35.7390], 
-                // zoom: 10,
-                // tileLayerURL: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                // attributionText: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                // markerHTML: `<div style="width: 10px; height: 10px; background-color: black; border-radius: 50%; border: 2px solid white;"></div>`,
-                // polygonSettings: {
-                //     color: area.color || "blue",
-                //     fillColor: area.color || "blue",
-                //     fillOpacity: 0.3,
-                // }
-
-                center: area.coordinates.length ? area.coordinates[0] : [-6.7857, 35.7390], 
+                center: area.coordinates.length ? area.coordinates[0] : [-6.7857, 35.7390],
                 zoom: 10,
-
-                // Use CARTO Basemap
                 tileLayerURL: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 attributionText: '© <a href="https://carto.com/">CARTO</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors',
-
                 markerHTML: `<div style="width: 10px; height: 10px; background-color: black; border-radius: 50%; border: 2px solid white;"></div>`,
-
                 polygonSettings: {
                     color: area.color || "blue",
                     fillColor: area.color || "blue",
                     fillOpacity: 0.3,
                 }
-
             });
         }
     }, [area]);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-        setFormErrors({ ...formErrors, [name]: "" }); 
+    const handleModalSubmit = (e) => {
+        e.preventDefault();
+        const url = route('interest', { id: site.id });
+
+        put(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                console.log("Interest submitted successfully!");
+                closeModal();
+            },
+            onError: (errorObject) => {
+                console.error('Error submitting interest:', errorObject);
+                const firstErrorKey = Object.keys(errorObject)[0];
+                if (firstErrorKey) {
+                    const errorInput = document.getElementsByName(firstErrorKey)[0];
+                    errorInput?.focus();
+                }
+            },
+        });
     };
 
-    
-    const handleModalSubmit = async () => {
-        const errors = {};
-    
-        // Validation logic
-        if (!formData.investorName) {
-            errors.investorName = "Investor name is required.";
-        }
-    
-        if (!formData.investorEmail) {
-            errors.investorEmail = "Investor email is required.";
-        } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.investorEmail)) {
-            errors.investorEmail = "Invalid email address.";
-        }
-    
-        if (!formData.investorPhone) {
-            errors.investorPhone = "Investor Phone is required.";
-        }
-    
-        if (!formData.description) {
-            errors.description = "Description is required.";
-        }
-    
-        // Check for validation errors
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors); 
-            return; 
-        }
-    
-        try {
-            const csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
-            if (!csrfMetaTag) {
-                throw new Error('CSRF meta tag not found.');
-            }
-            const csrfToken = csrfMetaTag.getAttribute('content');
-    
-            const response = await fetch(`/interest/${site.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken, // Include CSRF token
-                    'X-Requested-With': 'XMLHttpRequest', // Indicate it's an AJAX request
-                },
-                body: JSON.stringify({
-                    investorName: formData.investorName,
-                    investorEmail: formData.investorEmail,
-                    investorPhone: formData.investorPhone,
-                    description: formData.description,
-                }),
-            });
-
-            
-    
-            // Check if the response is ok
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Network response was not ok');
-            }
-    
-            const data = await response.json();
-            console.log(data.message);
-            setIsModalOpen(false);
-            setFormData({ investorName: "", investorEmail: "", investorPhone: "", description: "" }); // Reset form data
-            setFormErrors({}); // Clear any previous errors
-        } catch (error) {
-            console.error('Error:', error);
-            setFormErrors({ general: error.message }); // Set a general error message
-        }
+    const openModal = () => {
+        clearErrors();
+        reset();
+        setIsModalOpen(true);
     };
-    
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleCancel = () => {
+        closeModal();
+    };
+
+    useEffect(() => {
+        if (recentlySuccessful) {
+            const timer = setTimeout(() => {
+                closeModal();
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [recentlySuccessful]);
 
     return (
         <>
             <Head title="Site Details" />
+
+            <div className="absolute top-5 left-1/2 transform -translate-x-1/2 z-30 w-full max-w-xl px-4">
+                <FlashMessage message={successMessage} type="success" />
+                <FlashMessage message={errorMessage} type="error" />
+                <FlashMessage message={infoMessage} type="info" />
+            </div>
+
             <div className="relative min-h-screen flex flex-col items-center text-white">
                 <img id="background" className="absolute inset-0 w-full h-full object-cover z-0" src="/img/register.jpg" alt="Background" />
                 <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
-
                 <header className="relative z-20 w-full max-w-7xl px-6 py-3 flex flex-col md:flex-row items-center justify-between">
                     <h1 className="text-xl md:text-2xl font-bold text-blue-500">Site Details</h1>
                 </header>
-
                 <main className="relative z-20 w-full max-w-7xl flex flex-col md:flex-row flex-grow h-[90vh]">
                     <div className="w-full md:w-1/3 p-4 h-full flex flex-col overflow-y-auto">
                         <div className="bg-white shadow-md p-4 text-gray-900 rounded-md">
                             <div className="bg-gray-100 p-3 mb-2 rounded-md">
                                 <p className="text-sm font-bold text-gray-900">{site.project_description}</p>
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Card 1: Sector */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faIndustry} size="2x" />
@@ -155,8 +145,6 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.sector ? site.sector.name : "N/A"}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 2: Location */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faLocationDot} size="2x" />
@@ -166,8 +154,6 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.street_name}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 3: Zone */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faLocation} size="2x" />
@@ -177,8 +163,6 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.branch ? site.branch.name : "N/A"}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 4: Land Allocation Method */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faGavel} size="2x" />
@@ -188,8 +172,6 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.allocationmethod ? site.allocationmethod.name : "N/A"}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 5: Opportunity Type */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faMountain} size="2x" />
@@ -199,19 +181,15 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.opportunitytype ? site.opportunitytype.name : "N/A"}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 6: Activity */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faSpa} size="2x" />
                                     </div>
                                     <div className="card-content">
-                                        <p className="category">Activity</p>                                            
+                                        <p className="category">Activity</p>
                                         <small>{site.activity ? site.activity.name : "N/A"}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 7: Utilities */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faLightbulb} size="2x" />
@@ -221,8 +199,6 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.utility ? site.utility.name : "N/A"}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 8: Jurisdiction */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faLandmark} size="2x" />
@@ -232,8 +208,6 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.jurisdiction ? site.jurisdiction.name : "N/A"}</small>
                                     </div>
                                 </div>
-
-                                {/* Card 9: Land Area */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faRulerCombined} size="2x" />
@@ -243,8 +217,6 @@ export default function SiteDetail({ site, area }) {
                                         <small>{site.landarea} m²</small>
                                     </div>
                                 </div>
-
-                                {/* Card 10: Price of Land */}
                                 <div className="card card-stats">
                                     <div className="card-header">
                                         <FontAwesomeIcon icon={faMoneyBillWave} size="2x" />
@@ -255,11 +227,9 @@ export default function SiteDetail({ site, area }) {
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Submit Button */}
                             <button
                                 type="button"
-                                onClick={() => setIsModalOpen(true)}
+                                onClick={openModal}
                                 className="bg-green-500 text-white rounded p-2 flex items-center space-x-2 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 mt-4"
                             >
                                 <FontAwesomeIcon icon={faCheck} />
@@ -267,8 +237,6 @@ export default function SiteDetail({ site, area }) {
                             </button>
                         </div>
                     </div>
-
-                    {/* Map Section */}
                     <div className="w-full md:w-2/3 p-4">
                         {mapData && (
                             <MapView
@@ -285,75 +253,67 @@ export default function SiteDetail({ site, area }) {
                 </main>
             </div>
 
-            {/* Modal Component */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+                    <form onSubmit={handleModalSubmit} className="bg-white p-6 rounded-lg shadow-lg w-96">
                         <h2 className="text-xl font-bold text-gray-700 mb-4">Submit Site Interest</h2>
                         <div className="mb-2">
-                            <label className="block text-gray-600 text-sm font-semibold">Investor Name</label>
-                            <input
-                                type="text"
+                            <InputLabel htmlFor="investorName" value="Investor Name" />
+                            <TextInput
+                                id="investorName"
                                 name="investorName"
-                                value={formData.investorName}
-                                onChange={handleInputChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-green-500 ${formErrors.investorName ? 'border-red-500' : ''}`}
+                                value={data.investorName}
+                                onChange={(e) => setData('investorName', e.target.value)}
+                                className="w-full mt-1"
+                                required
                             />
-                            {formErrors.investorName && <p className="text-red-500 text-xs">{formErrors.investorName}</p>}
+                            <InputError message={errors.investorName} className="mt-1 text-xs" />
                         </div>
                         <div className="mb-2">
-                            <label className="block text-gray-600 text-sm font-semibold">Investor Email</label>
-                            <input
+                            <InputLabel htmlFor="investorEmail" value="Investor Email" />
+                            <TextInput
+                                id="investorEmail"
                                 type="email"
                                 name="investorEmail"
-                                value={formData.investorEmail}
-                                onChange={handleInputChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-green-500 ${formErrors.investorEmail ? 'border-red-500' : ''}`}
+                                value={data.investorEmail}
+                                onChange={(e) => setData('investorEmail', e.target.value)}
+                                className="w-full mt-1"
+                                required
                             />
-                            {formErrors.investorEmail && <p className="text-red-500 text-xs">{formErrors.investorEmail}</p>}
+                            <InputError message={errors.investorEmail} className="mt-1 text-xs" />
                         </div>
-
                         <div className="mb-2">
-                            <label className="block text-gray-600 text-sm font-semibold">Investor Phone</label>
-                            <input
-                                type="text"
+                            <InputLabel htmlFor="investorPhone" value="Investor Phone" />
+                            <TextInput
+                                id="investorPhone"
                                 name="investorPhone"
-                                value={formData.investorPhone}
-                                onChange={handleInputChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-green-500 ${formErrors.investorPhone ? 'border-red-500' : ''}`}
+                                value={data.investorPhone}
+                                onChange={(e) => setData('investorPhone', e.target.value)}
+                                className="w-full mt-1"
+                                required
                             />
-                            {formErrors.investorPhone && <p className="text-red-500 text-xs">{formErrors.investorPhone}</p>}
+                            <InputError message={errors.investorPhone} className="mt-1 text-xs" />
                         </div>
-
                         <div className="mb-4">
-                            <label className="block text-gray-600 text-sm font-semibold">Description</label>
+                            <InputLabel htmlFor="description" value="Description" />
                             <textarea
+                                id="description"
                                 name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
                                 rows="3"
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-green-500 ${formErrors.description ? 'border-red-500' : ''}`}
+                                className={`mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm ${errors.description ? 'border-red-500' : ''}`}
+                                required
                             />
-                            {formErrors.description && <p className="text-red-500 text-xs">{formErrors.description}</p>}
+                            <InputError message={errors.description} className="mt-1 text-xs" />
                         </div>
                         <div className="flex justify-end space-x-2">
-                            <button
-                                onClick={() => {
-                                    setIsModalOpen(false);
-                                    setFormData({ investorName: "", investorEmail: "", investorPhone: "",  description: "" }); // Reset form data
-                                }}
-                                className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleModalSubmit}
-                                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                            >
-                                Submit
-                            </button>
+                            <SecondaryButton type="button" onClick={handleCancel} disabled={processing}>Cancel</SecondaryButton>
+                            <PrimaryButton type="submit" disabled={processing} className={processing ? 'opacity-25' : ''}>
+                                {processing ? 'Submitting...' : 'Submit'}
+                            </PrimaryButton>
                         </div>
-                    </div>
+                    </form>
                 </div>
             )}
         </>

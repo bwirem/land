@@ -14,8 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+
 
 class WelComeController extends Controller
 {
@@ -131,50 +133,59 @@ class WelComeController extends Controller
     }
 
 
+
     public function siteInterest(Request $request, $id)
     {
-       
-       
-        DB::transaction(function () use ($request, $id) {
-        
-            // Validate input
-            $validated = $request->validate([
-                'investorName' => 'required|string|max:255',
-                'investorEmail' => 'required|email|max:255|unique:investors,email', // Ensure unique email in the investors table
-                'description' => 'nullable|string|max:1000', // Adjust max length as needed
-                //'investorType' => 'required|string|max:50', // Assuming you want to capture investor type
-                'investorPhone' => 'nullable|string|max:20', // If applicable
-            ]);
-        
-            // Create the investor using the validated data
-            $investorData = [
-                'investor_type' => "company", // Assuming this corresponds to the investor_type field
-                'company_name' => $validated['investorName'], // Mapping investorName to companyName
-                'email' => $validated['investorEmail'],
-                'phone' => $validated['investorPhone'], // Optional
-            ];
-        
-            // Create the Investor
-            $investor = Investor::create($investorData);
-        
-            // Create the SiteInvestor using the validated description and the newly created investor
-            $siteInvestorData = [
-                'user_id' =>1, // Assuming you're storing the authenticated user's ID
-                'site_id' => $id, // Assuming $id is the site ID
-                'investor_id' => $investor->id, // Use the newly created investor's ID
-                'description' => $validated['description'], // Store the description
-                'collateral_doc' => null, // Add this if you have collateral documents
-                'collateral_docname' => null, // Add this if you have collateral document names
-                
-            ];
-        
-            SiteInvestor::create($siteInvestorData);
+        $success = false;
+        $message = 'An error occurred while submitting your interest.';
 
-        });
-    
-        return response()->json(['message' => 'Investor created successfully.']);
+        try {
+            DB::transaction(function () use ($request, $id, &$success, &$message) {
+                $validated = $request->validate([
+                    'investorName' => 'required|string|max:255',
+                    'investorEmail' => 'required|email|max:255',
+                    'description' => 'nullable|string|max:1000',
+                    'investorPhone' => 'nullable|string|max:20',
+                ]);
 
+                $investor = Investor::firstOrCreate(
+                    ['email' => $validated['investorEmail']],
+                    [
+                        'investor_type' => "company",
+                        'company_name' => $validated['investorName'],
+                        'phone' => $validated['investorPhone'],
+                    ]
+                );
+
+                $existingInterest = SiteInvestor::where('site_id', $id)
+                    ->where('investor_id', $investor->id)
+                    ->first();
+
+                if ($existingInterest) {
+                    $message = 'You have already expressed interest in this site.';
+                    return; // Early exit
+                }
+
+                SiteInvestor::create([
+                    'user_id' => auth()->id() ?? 1,
+                    'site_id' => $id,
+                    'investor_id' => $investor->id,
+                    'description' => $validated['description'],
+                ]);
+
+                $success = true;
+                $message = 'Your interest has been submitted successfully!';
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Error submitting site interest: ' . $e->getMessage());
+        }
+
+        return Redirect::back()->with($success ? 'success' : 'error', $message);
     }
+
+
     
 
 

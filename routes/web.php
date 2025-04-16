@@ -49,11 +49,14 @@ use App\Models\SiteCoordinate;
 // Home Page
 Route::get('/', [WelComeController::class, 'welcome'])->name('welcome');
 
-// Site Detail Page
-Route::get('/homesite/{id}', [WelComeController::class, 'showSiteDetail'])->name('site.detail');
+Route::middleware('guest')->group(function () {  
+    // Site Detail Page
+    Route::get('/homesite/{id}', [WelComeController::class, 'showSiteDetail'])->name('site.detail');
 
-// Site Detail Page
-Route::put('/interest/{id}', [WelComeController::class, 'siteInterest'])->name('interest');
+    // Site Detail Page
+    Route::put('/interest/{id}', [WelComeController::class, 'siteInterest'])->name('interest');
+
+});
 
 // Dashboard
 Route::get('/dashboard', [WelComeController::class, 'dashboard'])
