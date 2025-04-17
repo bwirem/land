@@ -6,15 +6,15 @@ import { faSave, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import Modal from '@/Components/CustomModal';
 
-export default function Create({customerTypes}) {
+export default function Create({customerTypes,email}) {
     const { data, setData, post, errors, processing, reset } = useForm({
         landowner_type: 'individual', // Default value
         first_name: '',
         other_names: '',
         surname: '',
         company_name: '',
-        email: '',
-        phone: '',
+        email: email,
+        phone:'',
         address: '',
     });
 

@@ -186,7 +186,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 alt="Application Logo"
                                 className="w-8 h-8 mr-2"
                             />
-                            <h1 className="text-xl font-bold">Land</h1>
+                            <h1 className="text-xl font-bold">Land Mgt</h1>
                         </div>
                     </Link>
                 </div>

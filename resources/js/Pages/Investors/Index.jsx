@@ -70,31 +70,33 @@ export default function Index({ auth, investors, filters }) {
             <Head title="investor List" />
             <div className="container mx-auto p-4">
                 {/* Header Actions */}
-                <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-                    <div className="flex items-center space-x-2 mb-4 md:mb-0">
-                        <div className="relative flex items-center">
-                            <FontAwesomeIcon icon={faSearch} className="absolute left-3 text-gray-500" />
-                            <input
-                                type="text"
-                                name="search"
-                                placeholder="Search by name or company"
-                                value={data.search}
-                                onChange={handleSearchChange}
-                                className={`pl-10 border px-2 py-1 rounded text-sm ${errors.search ? "border-red-500" : ""
-                                    }`}
-                            />
+                {auth?.user?.userGroup?.name === 'Admin' && (
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+                        <div className="flex items-center space-x-2 mb-4 md:mb-0">
+                            <div className="relative flex items-center">
+                                <FontAwesomeIcon icon={faSearch} className="absolute left-3 text-gray-500" />
+                                <input
+                                    type="text"
+                                    name="search"
+                                    placeholder="Search by name or company"
+                                    value={data.search}
+                                    onChange={handleSearchChange}
+                                    className={`pl-10 border px-2 py-1 rounded text-sm ${errors.search ? "border-red-500" : ""
+                                        }`}
+                                />
+                            </div>
+
+
+                            <Link
+                                href={route("investor0.create")}
+                                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm flex items-center"
+                            >
+                                <FontAwesomeIcon icon={faPlus} className="mr-1" /> Create
+                            </Link>
                         </div>
 
-
-                        <Link
-                            href={route("investor0.create")}
-                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm flex items-center"
-                        >
-                            <FontAwesomeIcon icon={faPlus} className="mr-1" /> Create
-                        </Link>
                     </div>
-
-                </div>
+                )}
 
                 {/* investors Table */}
                 <div className="overflow-x-auto">
@@ -129,13 +131,15 @@ export default function Index({ auth, investors, filters }) {
                                                 <FontAwesomeIcon icon={faEdit} className="mr-1" />
                                                 Edit
                                             </Link>
-                                            <button
-                                                onClick={() => handleDelete(investor.id)}
-                                                className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex items-center"
-                                            >
-                                                <FontAwesomeIcon icon={faTrash} className="mr-1" />
-                                                Delete
-                                            </button>
+                                            {auth?.user?.userGroup?.name === 'Admin' && (
+                                                <button
+                                                    onClick={() => handleDelete(investor.id)}
+                                                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex items-center"
+                                                >
+                                                    <FontAwesomeIcon icon={faTrash} className="mr-1" />
+                                                    Delete
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

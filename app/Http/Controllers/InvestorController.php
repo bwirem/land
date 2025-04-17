@@ -29,7 +29,7 @@ class InvestorController extends Controller
         $user = auth()->user();
         $userGroup = $user->userGroup; 
         
-        if($userGroup->name == 'Landowner') {
+        if($userGroup->name == 'Investor') {
             $query->where('user_id', $user->id);
         } 
 
@@ -47,7 +47,9 @@ class InvestorController extends Controller
      */
     public function create()
     {
-        return inertia('Investors/Create');
+        return inertia('Investors/Create', [
+            'email' => "", 
+        ]);
     }
 
     /**

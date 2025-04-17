@@ -19,17 +19,17 @@ const debounce = (func, delay) => {
 };
 
 export default function Create({auth,sectors,activities,allocationMethods,
-    jurisdictions,opportunityTypes,utilities,facilityBranches}) {
+    jurisdictions,opportunityTypes,utilities,facilityBranches,landowner}) {
     // Form state using Inertia's useForm hook
     const { data, setData, post, errors, processing, reset } = useForm({
-        landowner_type: 'individual', // Default value
-        first_name: '',
-        other_names: '',
-        surname: '',
-        company_name: '',
-        email: '',
-        phone: '',
-        landowner_id: null,
+        landowner_type:landowner?.landowner_type || 'individual', // Default value
+        first_name: landowner?.first_name || '',
+        other_names: landowner?.other_names || '',
+        surname: landowner?.surname || '',
+        company_name: landowner?.company_name || '',
+        email: landowner?.email || '',
+        phone: landowner?.phone || '',        
+        landowner_id:landowner?.id || null,
         sector_id: '',
         activity_id: '',        
         allocationmethod_id: '',    

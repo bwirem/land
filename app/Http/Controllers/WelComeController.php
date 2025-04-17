@@ -10,6 +10,8 @@ use App\Models\LandOwner;
 use App\Models\Investor;
 use App\Models\SiteInvestor;
 
+use App\Enums\CustomerType;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -95,23 +97,40 @@ class WelComeController extends Controller
 
         
         if($userGroup->name == 'Landowner') {
-            $landOwner = LandOwner::where('user_id', $user->id)->count();
-            $site = Site::where('user_id', $user->id)->count();
+
+            $landOwner = LandOwner::where('user_id', $user->id)->first();
+            if (!$landOwner) {
+               // Get landowner types from the enum
+                $customerTypes = CustomerType::cases();
+                $customerTypes = array_map(fn($type) => ['value' => $type->value, 'label' => $type->label()], $customerTypes);
+
+                return inertia('LandOwners/Create', [
+                    'customerTypes' => $customerTypes,
+                    'email' => $user->email,                   
+                ]);
+            }
+
+            $site = Site::where('user_id', $user->id)->count();         
             return Inertia::render('DashboardLand', [
-                'stats' => [
-                    'landowners' => $landOwner,
+                'stats' => [                  
                     'sites' => $site,                    
                 ],
             ]);
 
         }else if($userGroup->name == 'Investor') {
-            $investor = Investor::where('user_id', $user->id)->first();           
+
+            $investor = Investor::where('user_id', $user->id)->first();            
+            if (!$investor) {
+                return inertia('Investors/Create', [
+                    'email' => $user->email,                   
+                ]);
+            }
+
             $siteInvestor = SiteInvestor::where('user_id', $user->id)->count();
 
             return Inertia::render('DashboardInvestor', [
-                'stats' => [                    
-                    'investors' => $investor,
-                    'site_interests' => SiteInvestor::count(),                   
+                'stats' => [ 
+                    'site_interests' => $siteInvestor,                   
                 ],
             ]);
 

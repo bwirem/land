@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head , Link } from '@inertiajs/react';
 import { faUsers, faLandmark, faBuilding, faHandshake, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -82,7 +82,7 @@ const DashboardCard = ({ title, count, icon, color, linkText, linkUrl }) => (
                 <p className="text-gray-600">{title}</p>
                 <h3 className="text-2xl font-bold">{count}</h3>
                 <div className="mt-2">
-                    <a href={linkUrl} className={`text-${color}-500 hover:underline`}>{linkText}</a>
+                    <Link href={linkUrl} className={`text-${color}-500 hover:underline`}>{linkText}</Link>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { faUsers, faLandmark, faBuilding, faHandshake, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -17,17 +17,7 @@ export default function DashboardInvestor({ stats }) {
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Overview Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">                       
-
-                        {/* Investors */}
-                        <DashboardCard 
-                            title="Investors" 
-                            count={stats.investors} 
-                            icon={faBuilding} 
-                            color="yellow"
-                            linkText="Manage Investors"
-                            linkUrl={route('investor0.index')}
-                        />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">   
 
                         {/* Site Interests */}
                         <DashboardCard 
@@ -57,7 +47,7 @@ const DashboardCard = ({ title, count, icon, color, linkText, linkUrl }) => (
                 <p className="text-gray-600">{title}</p>
                 <h3 className="text-2xl font-bold">{count}</h3>
                 <div className="mt-2">
-                    <a href={linkUrl} className={`text-${color}-500 hover:underline`}>{linkText}</a>
+                    <Link href={linkUrl} className={`text-${color}-500 hover:underline`}>{linkText}</Link>
                 </div>
             </div>
         </div>

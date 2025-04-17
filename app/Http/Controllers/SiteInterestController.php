@@ -44,6 +44,13 @@ class SiteInterestController extends Controller
                 ->orWhere('company_name', 'like', '%' . $request->search . '%');
             });
         }
+
+        $user = auth()->user();
+        $userGroup = $user->userGroup; 
+
+        if($userGroup->name == 'Investor') {
+            $query->where('user_id', $user->id);
+        } 
        
         // Only show stages less than or equal to 3
         $sites = $query->orderBy('created_at', 'desc')->paginate(10);

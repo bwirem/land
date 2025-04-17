@@ -59,6 +59,7 @@ class LandOwnerController extends Controller
 
         return inertia('LandOwners/Create', [
             'customerTypes' => $customerTypes,
+            'email' => "",           
         ]);
     }
 

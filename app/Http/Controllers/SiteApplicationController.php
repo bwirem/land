@@ -14,6 +14,7 @@ use App\Models\SiteOpportunityType;
 use App\Models\SiteUtility;
 use App\Models\SiteCoordinate;
 use App\Models\FacilityBranch;
+use App\Models\LandOwner;
 
 use App\Enums\SiteStage; // Or your constants class
 use App\Enums\ApprovalStatus;
@@ -75,6 +76,15 @@ class SiteApplicationController extends Controller
      */
     public function create()
     {
+        $user = auth()->user();
+        $userGroup = $user->userGroup;
+        
+        $landOwner = null; // Initialize $landOwner to null
+        
+        if($userGroup->name == 'Landowner') {
+            $landOwner = LandOwner::where('user_id', $user->id)->first();
+        } 
+
         return inertia('SiteApplication/Create', [          
             'sectors' => SiteSector::all(),
             'activities' => SiteActivity::all(),
@@ -82,7 +92,8 @@ class SiteApplicationController extends Controller
             'jurisdictions' => SiteJurisdiction::all(),
             'opportunityTypes' => SiteOpportunityType::all(),
             'utilities' => SiteUtility::all(),
-            'facilityBranches' => FacilityBranch::all(),            
+            'facilityBranches' => FacilityBranch::all(), 
+            'landowner' => $landOwner,           
         ]);
     }
 
